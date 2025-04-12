@@ -64,10 +64,34 @@ const MOCK_USERS = [
 
 // Permission mapping based on roles
 const ROLE_PERMISSIONS: Record<UserRole, string[]> = {
-  user: ["view_own_returns", "edit_own_returns", "upload_documents", "use_ai_assistant"],
-  admin: ["manage_users", "manage_tax_rules", "view_all_returns", "edit_all_returns", "system_settings"],
-  support: ["view_assigned_returns", "answer_questions", "view_user_status"],
-  accountant: ["view_assigned_returns", "edit_assigned_returns", "provide_tax_advice"],
+  user: [
+    "view_own_returns", 
+    "edit_own_returns", 
+    "upload_documents", 
+    "use_ai_assistant"
+  ],
+  admin: [
+    "manage_users", 
+    "manage_tax_rules", 
+    "view_all_returns", 
+    "edit_all_returns", 
+    "system_settings", 
+    "view_analytics",
+    "upload_documents"
+  ],
+  support: [
+    "view_assigned_returns", 
+    "answer_questions", 
+    "view_user_status", 
+    "upload_documents"
+  ],
+  accountant: [
+    "view_assigned_returns", 
+    "edit_assigned_returns", 
+    "provide_tax_advice", 
+    "view_analytics", 
+    "upload_documents"
+  ],
 };
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {

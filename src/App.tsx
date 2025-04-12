@@ -12,7 +12,16 @@ import Unauthorized from "./pages/Unauthorized";
 import TaxFilingPage from "./pages/TaxFilingPage";
 import AssistantPage from "./pages/AssistantPage";
 import NotFound from "./pages/NotFound";
-import ReturnsPage from "./pages/ReturnsPage"; // Add the new page
+import ReturnsPage from "./pages/ReturnsPage";
+import ProfilePage from "./pages/ProfilePage";
+import DocumentsPage from "./pages/DocumentsPage";
+import HelpPage from "./pages/HelpPage";
+import AnalyticsPage from "./pages/AnalyticsPage";
+import TaxRulesPage from "./pages/TaxRulesPage";
+import UsersPage from "./pages/UsersPage";
+import SettingsPage from "./pages/SettingsPage";
+import RequestsPage from "./pages/RequestsPage";
+import KnowledgeBasePage from "./pages/KnowledgeBasePage";
 import React from "react";
 
 // Create a client
@@ -32,6 +41,15 @@ const App: React.FC = () => (
               <Route path="/filing" element={<TaxFilingPage />} />
               <Route path="/assistant" element={<AssistantPage />} />
               <Route path="/returns" element={<ReturnsPage />} />
+              <Route path="/profile" element={<ProfilePage />} />
+              <Route path="/documents" element={<DocumentsPage />} />
+              <Route path="/help" element={<HelpPage />} />
+              <Route path="/analytics" element={<AnalyticsPage />} />
+              <Route path="/tax-rules" element={<TaxRulesPage />} />
+              <Route path="/users" element={<UsersPage />} />
+              <Route path="/settings" element={<SettingsPage />} />
+              <Route path="/requests" element={<RequestsPage />} />
+              <Route path="/knowledge" element={<KnowledgeBasePage />} />
               <Route path="/unauthorized" element={<Unauthorized />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
