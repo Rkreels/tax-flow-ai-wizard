@@ -17,37 +17,40 @@ import {
 } from "lucide-react";
 
 // Define navigation items by role
-const navigationByRole: Record<UserRole, { name: string; href: string; icon: React.ElementType }[]> = {
+const navigationByRole: Record<UserRole, { name: string; href: string; icon: React.ElementType; permission?: string }[]> = {
   user: [
     { name: "Dashboard", href: "/", icon: Home },
-    { name: "My Returns", href: "/returns", icon: FileText },
-    { name: "Upload Documents", href: "/documents", icon: Upload },
-    { name: "Tax Assistant", href: "/assistant", icon: MessageSquare },
+    { name: "My Returns", href: "/returns", icon: FileText, permission: "view_own_returns" },
+    { name: "New Tax Filing", href: "/filing", icon: Upload, permission: "edit_own_returns" },
+    { name: "Tax Assistant", href: "/assistant", icon: MessageSquare, permission: "use_ai_assistant" },
     { name: "Profile", href: "/profile", icon: User },
     { name: "Help", href: "/help", icon: HelpCircle },
   ],
   admin: [
     { name: "Dashboard", href: "/", icon: Home },
-    { name: "Users", href: "/users", icon: Users },
-    { name: "Tax Rules", href: "/tax-rules", icon: FileText },
+    { name: "All Returns", href: "/returns", icon: FileText, permission: "view_all_returns" },
+    { name: "Users", href: "/users", icon: Users, permission: "manage_users" },
+    { name: "Tax Rules", href: "/tax-rules", icon: FileText, permission: "manage_tax_rules" },
     { name: "Analytics", href: "/analytics", icon: BarChart2 },
-    { name: "Settings", href: "/settings", icon: Settings },
+    { name: "Settings", href: "/settings", icon: Settings, permission: "system_settings" },
   ],
   support: [
     { name: "Dashboard", href: "/", icon: Home },
-    { name: "User Requests", href: "/requests", icon: Users },
+    { name: "User Returns", href: "/returns", icon: FileText, permission: "view_user_status" },
+    { name: "User Requests", href: "/requests", icon: Users, permission: "answer_questions" },
     { name: "Knowledge Base", href: "/knowledge", icon: FileText },
   ],
   accountant: [
     { name: "Dashboard", href: "/", icon: Home },
-    { name: "Client Returns", href: "/client-returns", icon: FileText },
+    { name: "Client Returns", href: "/returns", icon: FileText, permission: "view_assigned_returns" },
+    { name: "New Tax Filing", href: "/filing", icon: Upload, permission: "edit_assigned_returns" },
     { name: "Documents", href: "/documents", icon: Upload },
     { name: "Analytics", href: "/analytics", icon: BarChart2 },
   ],
 };
 
 const Sidebar: React.FC = () => {
-  const { user, logout } = useAuth();
+  const { user, logout, hasPermission } = useAuth();
 
   if (!user) {
     return null;
@@ -67,6 +70,11 @@ const Sidebar: React.FC = () => {
       <div className="flex flex-1 flex-col overflow-y-auto">
         <nav className="flex-1 space-y-1 px-2 py-4">
           {navigation.map((item) => {
+            // Skip rendering items that require permissions the user doesn't have
+            if (item.permission && !hasPermission(item.permission)) {
+              return null;
+            }
+            
             const Icon = item.icon;
             return (
               <NavLink

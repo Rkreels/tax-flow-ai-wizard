@@ -14,7 +14,11 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useTheme } from "@/hooks/use-theme";
 
-const TopBar: React.FC = () => {
+interface TopBarProps {
+  onMenuClick?: () => void;
+}
+
+const TopBar: React.FC<TopBarProps> = ({ onMenuClick }) => {
   const { user, logout } = useAuth();
   const { theme, setTheme } = useTheme();
   
@@ -30,7 +34,7 @@ const TopBar: React.FC = () => {
     <header className="border-b bg-white dark:bg-gray-900 dark:border-gray-800">
       <div className="flex h-16 items-center justify-between px-4 md:px-6">
         <div className="flex items-center md:hidden">
-          <Button variant="ghost" size="icon">
+          <Button variant="ghost" size="icon" onClick={onMenuClick}>
             <Menu className="h-5 w-5" />
             <span className="sr-only">Toggle menu</span>
           </Button>
