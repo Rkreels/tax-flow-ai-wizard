@@ -1,4 +1,9 @@
 
-// Use our Dashboard component as the main page
-import Dashboard from './Dashboard';
-export default Dashboard;
+import React from "react";
+import Dashboard from "./Dashboard";
+
+const Index: React.FC = () => {
+  return <Dashboard />;
+};
+
+export default Index;
