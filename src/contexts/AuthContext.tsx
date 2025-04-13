@@ -62,30 +62,35 @@ const MOCK_USERS = [
   },
 ];
 
-// Permission mapping based on roles
+// Permission mapping based on roles - TurboTax style with strictly defined permissions
 const ROLE_PERMISSIONS: Record<UserRole, string[]> = {
   user: [
+    "dashboard",
     "view_own_returns", 
     "edit_own_returns", 
     "upload_documents", 
-    "use_ai_assistant"
+    "use_ai_assistant",
+    "view_profile",
+    "view_help"
   ],
   admin: [
+    "dashboard",
     "manage_users", 
     "manage_tax_rules", 
     "view_all_returns", 
     "edit_all_returns", 
     "system_settings", 
-    "view_analytics",
-    "upload_documents"
+    "view_analytics"
   ],
   support: [
-    "view_assigned_returns", 
-    "answer_questions", 
+    "dashboard",
     "view_user_status", 
-    "upload_documents"
+    "answer_questions", 
+    "view_knowledge_base", 
+    "view_help"
   ],
   accountant: [
+    "dashboard",
     "view_assigned_returns", 
     "edit_assigned_returns", 
     "provide_tax_advice", 

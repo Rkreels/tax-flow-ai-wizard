@@ -1,10 +1,11 @@
 
-import React, { useState } from "react";
-import { Navigate } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import Sidebar from "./Sidebar";
 import TopBar from "./TopBar";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
+import { useToast } from "@/components/ui/use-toast";
 
 interface MainLayoutProps {
   children: React.ReactNode;
@@ -12,12 +13,25 @@ interface MainLayoutProps {
 }
 
 const MainLayout: React.FC<MainLayoutProps> = ({ children, requiredPermission }) => {
-  const { isAuthenticated, isLoading, hasPermission } = useAuth();
+  const { isAuthenticated, isLoading, hasPermission, user } = useAuth();
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+  const { toast } = useToast();
+  const location = useLocation();
   
   const toggleMobileSidebar = () => {
     setIsMobileSidebarOpen(!isMobileSidebarOpen);
   };
+
+  // Check permissions whenever the route changes
+  useEffect(() => {
+    if (isAuthenticated && requiredPermission && !hasPermission(requiredPermission)) {
+      toast({
+        title: "Access Denied",
+        description: `You don't have permission to access this page.`,
+        variant: "destructive",
+      });
+    }
+  }, [requiredPermission, hasPermission, isAuthenticated, location.pathname, toast]);
 
   if (isLoading) {
     return (

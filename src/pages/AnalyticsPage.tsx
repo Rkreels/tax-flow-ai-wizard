@@ -2,7 +2,7 @@
 import React from "react";
 import MainLayout from "@/components/layout/MainLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { BarChart, LineChart } from "recharts";
+import { BarChart as RechartsBarChart, Bar, LineChart as RechartsLineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import { BarChart2, LineChart as LineChartIcon, TrendingUp, Users } from "lucide-react";
 
 const AnalyticsPage: React.FC = () => {
@@ -14,6 +14,16 @@ const AnalyticsPage: React.FC = () => {
     { name: "Apr", value: 800 },
     { name: "May", value: 500 },
     { name: "Jun", value: 700 },
+  ];
+
+  const userActivityData = [
+    { name: "Mon", active: 120, new: 25 },
+    { name: "Tue", active: 98, new: 15 },
+    { name: "Wed", active: 130, new: 30 },
+    { name: "Thu", active: 125, new: 22 },
+    { name: "Fri", active: 85, new: 18 },
+    { name: "Sat", active: 60, new: 10 },
+    { name: "Sun", active: 45, new: 5 },
   ];
 
   return (
@@ -70,11 +80,16 @@ const AnalyticsPage: React.FC = () => {
               <CardTitle>Monthly Returns Filed</CardTitle>
             </CardHeader>
             <CardContent className="h-80">
-              <div className="h-full w-full flex items-center justify-center">
-                <div className="text-sm text-muted-foreground">
-                  Chart visualization would be displayed here
-                </div>
-              </div>
+              <ResponsiveContainer width="100%" height="100%">
+                <RechartsBarChart data={monthlyData}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="name" />
+                  <YAxis />
+                  <Tooltip />
+                  <Legend />
+                  <Bar dataKey="value" fill="#6366F1" name="Returns" />
+                </RechartsBarChart>
+              </ResponsiveContainer>
             </CardContent>
           </Card>
           <Card className="col-span-1">
@@ -82,11 +97,17 @@ const AnalyticsPage: React.FC = () => {
               <CardTitle>User Activity</CardTitle>
             </CardHeader>
             <CardContent className="h-80">
-              <div className="h-full w-full flex items-center justify-center">
-                <div className="text-sm text-muted-foreground">
-                  Chart visualization would be displayed here
-                </div>
-              </div>
+              <ResponsiveContainer width="100%" height="100%">
+                <RechartsLineChart data={userActivityData}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="name" />
+                  <YAxis />
+                  <Tooltip />
+                  <Legend />
+                  <Line type="monotone" dataKey="active" stroke="#6366F1" name="Active Users" />
+                  <Line type="monotone" dataKey="new" stroke="#4ADE80" name="New Users" />
+                </RechartsLineChart>
+              </ResponsiveContainer>
             </CardContent>
           </Card>
         </div>
