@@ -63,6 +63,9 @@ const Sidebar: React.FC = () => {
 
   // Get navigation items for the current user role
   const navigation = navigationByRole[user.role] || [];
+  
+  // Only include navigation items the user has permission to access
+  const authorizedNavigation = navigation.filter(item => hasPermission(item.permission));
 
   return (
     <aside className="hidden w-64 flex-shrink-0 border-r bg-white dark:bg-gray-900 dark:border-gray-800 md:flex md:flex-col">
@@ -75,40 +78,37 @@ const Sidebar: React.FC = () => {
 
       <div className="flex flex-1 flex-col overflow-y-auto">
         <nav className="flex-1 space-y-1 px-2 py-4">
-          {navigation
-            // Only show navigation items the user has permission to see
-            .filter(item => hasPermission(item.permission))
-            .map((item) => {
-              const Icon = item.icon;
-              return (
-                <NavLink
-                  key={item.name}
-                  to={item.href}
-                  className={({ isActive }) =>
-                    cn(
-                      "group flex items-center px-2 py-2 text-sm font-medium rounded-md",
-                      isActive
-                        ? "bg-taxBlue-50 text-taxBlue-700 dark:bg-gray-800 dark:text-white"
-                        : "text-gray-600 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-800"
-                    )
-                  }
-                >
-                  {({ isActive }) => (
-                    <>
-                      <Icon
-                        className={cn(
-                          "mr-3 h-5 w-5 flex-shrink-0",
-                          isActive
-                            ? "text-taxBlue-500 dark:text-white"
-                            : "text-gray-400 dark:text-gray-400"
-                        )}
-                      />
-                      <span>{item.name}</span>
-                    </>
-                  )}
-                </NavLink>
-              );
-            })}
+          {authorizedNavigation.map((item) => {
+            const Icon = item.icon;
+            return (
+              <NavLink
+                key={item.name}
+                to={item.href}
+                className={({ isActive }) =>
+                  cn(
+                    "group flex items-center px-2 py-2 text-sm font-medium rounded-md",
+                    isActive
+                      ? "bg-taxBlue-50 text-taxBlue-700 dark:bg-gray-800 dark:text-white"
+                      : "text-gray-600 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-800"
+                  )
+                }
+              >
+                {({ isActive }) => (
+                  <>
+                    <Icon
+                      className={cn(
+                        "mr-3 h-5 w-5 flex-shrink-0",
+                        isActive
+                          ? "text-taxBlue-500 dark:text-white"
+                          : "text-gray-400 dark:text-gray-400"
+                      )}
+                    />
+                    <span>{item.name}</span>
+                  </>
+                )}
+              </NavLink>
+            );
+          })}
         </nav>
       </div>
 

@@ -22,16 +22,20 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children, requiredPermission })
     setIsMobileSidebarOpen(!isMobileSidebarOpen);
   };
 
-  // Check permissions whenever the route changes
+  // Check if user has required permission
+  const userHasAccess = !requiredPermission || hasPermission(requiredPermission);
+
   useEffect(() => {
-    if (isAuthenticated && requiredPermission && !hasPermission(requiredPermission)) {
+    // Only show the toast if the user is authenticated but doesn't have permission
+    // This prevents showing the toast during initial loading or when not logged in
+    if (isAuthenticated && requiredPermission && !userHasAccess) {
       toast({
         title: "Access Denied",
         description: `You don't have permission to access this page.`,
         variant: "destructive",
       });
     }
-  }, [requiredPermission, hasPermission, isAuthenticated, location.pathname, toast]);
+  }, [requiredPermission, userHasAccess, isAuthenticated, location.pathname, toast]);
 
   if (isLoading) {
     return (
@@ -41,11 +45,13 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children, requiredPermission })
     );
   }
 
+  // Redirect to login if not authenticated
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
   }
 
-  if (requiredPermission && !hasPermission(requiredPermission)) {
+  // Redirect to unauthorized page if missing required permission
+  if (requiredPermission && !userHasAccess) {
     return <Navigate to="/unauthorized" replace />;
   }
 
