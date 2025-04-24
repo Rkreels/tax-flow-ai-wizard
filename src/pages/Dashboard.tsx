@@ -1,14 +1,23 @@
-
 import React from "react";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { useVoiceAssistant } from "@/contexts/VoiceAssistantContext";
 import MainLayout from "@/components/layout/MainLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { ArrowRight, FileText, Briefcase, Home, Receipt, FileCheck } from "lucide-react";
+import { ArrowRight, FileText, FileCheck, Receipt, Activity, Users, BookOpen, Settings } from "lucide-react";
 
 // User-specific dashboard components
 const UserDashboard: React.FC = () => {
+  const { speakElementMessage } = useVoiceAssistant();
+  const navigate = useNavigate();
+  
+  const handleButtonClick = (path: string, elementId: string) => {
+    speakElementMessage(elementId);
+    navigate(path);
+  };
+  
   return (
     <div className="space-y-8">
       {/* Welcome Card */}
@@ -25,7 +34,10 @@ const UserDashboard: React.FC = () => {
             <Progress value={15} className="h-2" />
             <p className="mt-1 text-sm text-muted-foreground">Progress: 15% complete</p>
           </div>
-          <Button className="mt-2">
+          <Button 
+            className="mt-2" 
+            onClick={() => handleButtonClick("/filing", "navFiling")}
+          >
             Continue Filing <ArrowRight className="ml-2 h-4 w-4" />
           </Button>
         </CardContent>
@@ -43,7 +55,12 @@ const UserDashboard: React.FC = () => {
             </CardDescription>
           </CardHeader>
           <CardContent className="relative">
-            <Button variant="secondary">Get Started</Button>
+            <Button 
+              variant="secondary" 
+              onClick={() => handleButtonClick("/filing", "navFiling")}
+            >
+              Get Started
+            </Button>
           </CardContent>
         </Card>
 
@@ -57,7 +74,12 @@ const UserDashboard: React.FC = () => {
             </CardDescription>
           </CardHeader>
           <CardContent className="relative">
-            <Button variant="secondary">Upload</Button>
+            <Button 
+              variant="secondary" 
+              onClick={() => handleButtonClick("/documents", "uploadDocument")}
+            >
+              Upload
+            </Button>
           </CardContent>
         </Card>
 
@@ -71,7 +93,12 @@ const UserDashboard: React.FC = () => {
             </CardDescription>
           </CardHeader>
           <CardContent className="relative">
-            <Button variant="secondary">Explore</Button>
+            <Button 
+              variant="secondary" 
+              onClick={() => handleButtonClick("/assistant", "navAssistant")}
+            >
+              Explore
+            </Button>
           </CardContent>
         </Card>
       </div>
@@ -110,6 +137,14 @@ const UserDashboard: React.FC = () => {
 
 // Admin-specific dashboard components
 const AdminDashboard: React.FC = () => {
+  const { speakElementMessage } = useVoiceAssistant();
+  const navigate = useNavigate();
+  
+  const handleButtonClick = (path: string, elementId: string) => {
+    speakElementMessage(elementId);
+    navigate(path);
+  };
+  
   return (
     <div className="space-y-6">
       <Card className="bg-taxBlue-50 border-taxBlue-100 dark:bg-taxBlue-900/20 dark:border-taxBlue-700/30">
@@ -135,7 +170,7 @@ const AdminDashboard: React.FC = () => {
         </CardContent>
       </Card>
 
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="grid gap-4 md:grid-cols-2 mb-6">
         <Card>
           <CardHeader>
             <CardTitle>User Activity</CardTitle>
@@ -151,28 +186,28 @@ const AdminDashboard: React.FC = () => {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between" id="authStatus" onClick={() => speakElementMessage("authStatus")}>
                 <div className="flex items-center">
                   <div className="h-3 w-3 rounded-full bg-green-500 mr-2"></div>
                   <span>Authentication Service</span>
                 </div>
                 <span className="text-sm text-green-600 dark:text-green-400">Operational</span>
               </div>
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between" id="taxEngineStatus" onClick={() => speakElementMessage("taxEngineStatus")}>
                 <div className="flex items-center">
                   <div className="h-3 w-3 rounded-full bg-green-500 mr-2"></div>
                   <span>Tax Calculation Engine</span>
                 </div>
                 <span className="text-sm text-green-600 dark:text-green-400">Operational</span>
               </div>
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between" id="docProcessingStatus" onClick={() => speakElementMessage("docProcessingStatus")}>
                 <div className="flex items-center">
                   <div className="h-3 w-3 rounded-full bg-green-500 mr-2"></div>
                   <span>Document Processing</span>
                 </div>
                 <span className="text-sm text-green-600 dark:text-green-400">Operational</span>
               </div>
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between" id="aiAssistantStatus" onClick={() => speakElementMessage("aiAssistantStatus")}>
                 <div className="flex items-center">
                   <div className="h-3 w-3 rounded-full bg-amber-500 mr-2"></div>
                   <span>AI Assistant</span>
@@ -183,12 +218,67 @@ const AdminDashboard: React.FC = () => {
           </CardContent>
         </Card>
       </div>
+
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <Button 
+          id="allReturnsBtn"
+          className="flex flex-col items-center justify-center p-6 h-auto gap-3"
+          onClick={() => handleButtonClick("/returns", "allReturnsBtn")}
+        >
+          <FileText className="h-8 w-8" />
+          <span>All Returns</span>
+        </Button>
+        <Button 
+          id="usersBtn"
+          className="flex flex-col items-center justify-center p-6 h-auto gap-3"
+          onClick={() => handleButtonClick("/users", "usersBtn")}
+        >
+          <Users className="h-8 w-8" />
+          <span>Users</span>
+        </Button>
+        <Button 
+          id="taxRulesBtn"
+          className="flex flex-col items-center justify-center p-6 h-auto gap-3"
+          onClick={() => handleButtonClick("/tax-rules", "taxRulesBtn")}
+        >
+          <BookOpen className="h-8 w-8" />
+          <span>Tax Rules</span>
+        </Button>
+        <Button 
+          id="analyticsBtn"
+          className="flex flex-col items-center justify-center p-6 h-auto gap-3"
+          onClick={() => handleButtonClick("/analytics", "analyticsBtn")}
+        >
+          <Activity className="h-8 w-8" />
+          <span>Analytics</span>
+        </Button>
+      </div>
+
+      <div className="flex justify-end">
+        <Button 
+          id="settingsBtn"
+          variant="outline" 
+          className="flex items-center gap-2"
+          onClick={() => handleButtonClick("/settings", "settingsBtn")}
+        >
+          <Settings className="h-5 w-5" />
+          <span>Settings</span>
+        </Button>
+      </div>
     </div>
   );
 };
 
 // Support agent dashboard
 const SupportDashboard: React.FC = () => {
+  const { speakElementMessage } = useVoiceAssistant();
+  const navigate = useNavigate();
+  
+  const handleButtonClick = (path: string, elementId: string) => {
+    speakElementMessage(elementId);
+    navigate(path);
+  };
+  
   return (
     <div className="space-y-6">
       <Card className="bg-taxBlue-50 border-taxBlue-100 dark:bg-taxBlue-900/20 dark:border-taxBlue-700/30">
@@ -259,6 +349,14 @@ const SupportDashboard: React.FC = () => {
 
 // Tax professional dashboard
 const AccountantDashboard: React.FC = () => {
+  const { speakElementMessage } = useVoiceAssistant();
+  const navigate = useNavigate();
+  
+  const handleButtonClick = (path: string, elementId: string) => {
+    speakElementMessage(elementId);
+    navigate(path);
+  };
+  
   return (
     <div className="space-y-6">
       <Card className="bg-taxBlue-50 border-taxBlue-100 dark:bg-taxBlue-900/20 dark:border-taxBlue-700/30">

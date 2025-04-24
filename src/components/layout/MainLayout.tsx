@@ -6,6 +6,7 @@ import Sidebar from "./Sidebar";
 import TopBar from "./TopBar";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { useToast } from "@/components/ui/use-toast";
+import { VoiceAssistantProvider } from "@/contexts/VoiceAssistantContext";
 
 interface MainLayoutProps {
   children: React.ReactNode;
@@ -56,24 +57,26 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children, requiredPermission })
   }
 
   return (
-    <div className="flex h-screen overflow-hidden">
-      {/* Desktop sidebar */}
-      <Sidebar />
+    <VoiceAssistantProvider>
+      <div className="flex h-screen overflow-hidden">
+        {/* Desktop sidebar */}
+        <Sidebar />
 
-      {/* Mobile sidebar */}
-      <Sheet open={isMobileSidebarOpen} onOpenChange={setIsMobileSidebarOpen}>
-        <SheetContent side="left" className="p-0 w-64">
-          <Sidebar />
-        </SheetContent>
-      </Sheet>
+        {/* Mobile sidebar */}
+        <Sheet open={isMobileSidebarOpen} onOpenChange={setIsMobileSidebarOpen}>
+          <SheetContent side="left" className="p-0 w-64">
+            <Sidebar />
+          </SheetContent>
+        </Sheet>
 
-      <div className="flex flex-1 flex-col overflow-hidden">
-        <TopBar onMenuClick={toggleMobileSidebar} />
-        <main className="flex-1 overflow-y-auto p-4 md:p-6">
-          {children}
-        </main>
+        <div className="flex flex-1 flex-col overflow-hidden">
+          <TopBar onMenuClick={toggleMobileSidebar} />
+          <main className="flex-1 overflow-y-auto p-4 md:p-6">
+            {children}
+          </main>
+        </div>
       </div>
-    </div>
+    </VoiceAssistantProvider>
   );
 };
 

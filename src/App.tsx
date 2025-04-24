@@ -32,8 +32,6 @@ const App: React.FC = () => (
     <ThemeProvider defaultTheme="light">
       <TooltipProvider>
         <AuthProvider>
-          <Toaster />
-          <Sonner />
           <BrowserRouter>
             <Routes>
               <Route path="/login" element={<Login />} />
@@ -54,6 +52,8 @@ const App: React.FC = () => (
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
+          <Toaster />
+          <Sonner />
         </AuthProvider>
       </TooltipProvider>
     </ThemeProvider>

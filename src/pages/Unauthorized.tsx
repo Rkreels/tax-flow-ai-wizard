@@ -1,12 +1,18 @@
 
-import React from "react";
+import React, { useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { Shield } from "lucide-react";
+import { useVoiceAssistant } from "@/contexts/VoiceAssistantContext";
 
 const Unauthorized: React.FC = () => {
   const { user } = useAuth();
+  const { speak } = useVoiceAssistant();
+
+  useEffect(() => {
+    speak("Access denied. You don't have permission to access this page. Please return to the dashboard or sign in with a different account.");
+  }, [speak]);
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-background p-4 text-center">
