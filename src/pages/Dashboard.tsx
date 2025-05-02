@@ -357,6 +357,13 @@ const AccountantDashboard: React.FC = () => {
     navigate(path);
   };
   
+  const handleReviewClick = (clientId: string) => {
+    // Navigate to the filing page with client ID as a parameter
+    navigate(`/filing?clientId=${clientId}`);
+    // Voice feedback
+    speakElementMessage("reviewClient");
+  };
+  
   return (
     <div className="space-y-6">
       <Card className="bg-taxBlue-50 border-taxBlue-100 dark:bg-taxBlue-900/20 dark:border-taxBlue-700/30">
@@ -396,7 +403,11 @@ const AccountantDashboard: React.FC = () => {
                 <p className="text-sm font-medium">Mary Lee • 1040 Individual Return</p>
                 <p className="text-xs text-muted-foreground">Due: Apr 15, 2025 • Complexity: Medium</p>
               </div>
-              <Button size="sm">Review</Button>
+              <Button 
+                size="sm" 
+                onClick={() => handleReviewClick("client-ml")}
+                id="reviewClient"
+              >Review</Button>
             </div>
             <div className="flex items-center border-b pb-2">
               <div className="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 mr-3">
@@ -406,7 +417,10 @@ const AccountantDashboard: React.FC = () => {
                 <p className="text-sm font-medium">Robert Garcia • Schedule C Business</p>
                 <p className="text-xs text-muted-foreground">Due: Apr 15, 2025 • Complexity: High</p>
               </div>
-              <Button size="sm">Review</Button>
+              <Button 
+                size="sm"
+                onClick={() => handleReviewClick("client-rg")}
+              >Review</Button>
             </div>
             <div className="flex items-center border-b pb-2">
               <div className="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 mr-3">
@@ -416,7 +430,10 @@ const AccountantDashboard: React.FC = () => {
                 <p className="text-sm font-medium">Tina Williams • Rental Income</p>
                 <p className="text-xs text-muted-foreground">Due: Apr 15, 2025 • Complexity: Medium</p>
               </div>
-              <Button size="sm">Review</Button>
+              <Button 
+                size="sm"
+                onClick={() => handleReviewClick("client-tw")}
+              >Review</Button>
             </div>
           </div>
         </CardContent>

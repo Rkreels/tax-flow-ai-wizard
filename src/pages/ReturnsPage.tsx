@@ -7,6 +7,8 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Eye, FileText, PenLine, Plus, Trash2 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
+import { useVoiceAssistant } from "@/contexts/VoiceAssistantContext";
+import { useLocation } from "react-router-dom";
 
 interface TaxReturn {
   id: string;
@@ -15,10 +17,15 @@ interface TaxReturn {
   status: "draft" | "in_progress" | "submitted" | "approved";
   type: string;
   lastUpdated: string;
+  clientId?: string;
+  clientName?: string;
 }
 
 const ReturnsPage: React.FC = () => {
   const { user } = useAuth();
+  const { speak } = useVoiceAssistant();
+  const location = useLocation();
+  
   const isAdmin = user?.role === "admin";
   const isAccountant = user?.role === "accountant";
   const isSupport = user?.role === "support";
@@ -41,16 +48,63 @@ const ReturnsPage: React.FC = () => {
       type: "Individual",
       lastUpdated: "2024-03-15"
     },
+    ...(isAccountant ? [
+      {
+        id: "client-ml",
+        name: "2023 Individual Return",
+        year: "2023",
+        status: "in_progress",
+        type: "Individual",
+        lastUpdated: "2025-04-08",
+        clientId: "client-ml",
+        clientName: "Mary Lee"
+      },
+      {
+        id: "client-rg",
+        name: "2023 Schedule C Business",
+        year: "2023",
+        status: "submitted",
+        type: "Business",
+        lastUpdated: "2025-04-05",
+        clientId: "client-rg",
+        clientName: "Robert Garcia"
+      },
+      {
+        id: "client-tw",
+        name: "2023 Rental Income",
+        year: "2023",
+        status: "draft",
+        type: "Schedule E",
+        lastUpdated: "2025-04-02",
+        clientId: "client-tw",
+        clientName: "Tina Williams"
+      }
+    ] : [])
   ]);
 
   const [selectedReturn, setSelectedReturn] = useState<TaxReturn | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
 
+  // Provide voice guidance when the page loads
+  React.useEffect(() => {
+    const pageDescription = isAccountant ? 
+      "Client tax returns page. Review and manage tax returns for your clients." :
+      isAdmin ? 
+      "All tax returns page. View and manage all users' tax returns." : 
+      "My tax returns page. View and manage your personal tax returns.";
+    
+    speak(pageDescription);
+  }, [speak, isAdmin, isAccountant]);
+
   const handleDelete = (id: string) => {
     setReturns(returns.filter(r => r.id !== id));
     setIsDeleteDialogOpen(false);
     toast.success("Tax return deleted successfully");
+  };
+
+  const handleReview = (taxReturn: TaxReturn) => {
+    window.location.href = `/filing?id=${taxReturn.id}${taxReturn.clientId ? `&clientId=${taxReturn.clientId}` : ''}`;
   };
 
   const canEdit = (status: string) => {
@@ -77,7 +131,11 @@ const ReturnsPage: React.FC = () => {
                                  isSupport ? "view_user_status" : "view_own_returns"}>
       <div className="space-y-6">
         <div className="flex items-center justify-between">
-          <h1 className="text-3xl font-bold tracking-tight">{isAdmin ? "All Tax Returns" : "My Tax Returns"}</h1>
+          <h1 className="text-3xl font-bold tracking-tight">
+            {isAdmin ? "All Tax Returns" : 
+             isAccountant ? "Client Tax Returns" : 
+             "My Tax Returns"}
+          </h1>
           
           {!isSupport && (
             <Button onClick={() => window.location.href = "/filing"}>
@@ -94,6 +152,11 @@ const ReturnsPage: React.FC = () => {
                   <FileText className="mr-2 h-5 w-5 text-muted-foreground" />
                   {taxReturn.name}
                 </CardTitle>
+                {taxReturn.clientName && (
+                  <CardDescription>
+                    Client: {taxReturn.clientName}
+                  </CardDescription>
+                )}
                 <CardDescription>
                   <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${getStatusBadgeClass(taxReturn.status)}`}>
                     {taxReturn.status.replace("_", " ").toUpperCase()}
@@ -123,7 +186,7 @@ const ReturnsPage: React.FC = () => {
                     <Button
                       size="sm"
                       variant="outline"
-                      onClick={() => window.location.href = `/filing?id=${taxReturn.id}`}
+                      onClick={() => handleReview(taxReturn)}
                     >
                       <PenLine className="h-4 w-4" />
                       <span className="sr-only">Edit</span>
@@ -156,6 +219,7 @@ const ReturnsPage: React.FC = () => {
             <DialogHeader>
               <DialogTitle>{selectedReturn?.name}</DialogTitle>
               <DialogDescription>
+                {selectedReturn?.clientName ? `Client: ${selectedReturn.clientName} - ` : ''}
                 Return details for {selectedReturn?.year}
               </DialogDescription>
             </DialogHeader>
@@ -174,8 +238,8 @@ const ReturnsPage: React.FC = () => {
             <DialogFooter>
               <Button onClick={() => setIsViewDialogOpen(false)}>Close</Button>
               {selectedReturn && canEdit(selectedReturn.status) && (
-                <Button onClick={() => window.location.href = `/filing?id=${selectedReturn.id}`}>
-                  Continue Filing
+                <Button onClick={() => handleReview(selectedReturn)}>
+                  {isAccountant ? "Review Return" : "Continue Filing"}
                 </Button>
               )}
             </DialogFooter>

@@ -6,6 +6,7 @@ import Sidebar from "./Sidebar";
 import TopBar from "./TopBar";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { useToast } from "@/components/ui/use-toast";
+import { useVoiceAssistant } from "@/contexts/VoiceAssistantContext";
 
 interface MainLayoutProps {
   children: React.ReactNode;
@@ -17,6 +18,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children, requiredPermission })
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const { toast } = useToast();
   const location = useLocation();
+  const { speak } = useVoiceAssistant();
   
   const toggleMobileSidebar = () => {
     setIsMobileSidebarOpen(!isMobileSidebarOpen);
@@ -25,17 +27,18 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children, requiredPermission })
   // Check if user has required permission
   const userHasAccess = !requiredPermission || hasPermission(requiredPermission);
 
+  // Announce permission issues with voice assistant
   useEffect(() => {
-    // Only show the toast if the user is authenticated but doesn't have permission
-    // This prevents showing the toast during initial loading or when not logged in
     if (isAuthenticated && requiredPermission && !userHasAccess) {
+      speak(`Access denied. You don't have permission to access this page. Your role is ${user?.role}, which doesn't have the required ${requiredPermission} permission.`);
+      
       toast({
         title: "Access Denied",
         description: `You don't have permission to access this page.`,
         variant: "destructive",
       });
     }
-  }, [requiredPermission, userHasAccess, isAuthenticated, location.pathname, toast]);
+  }, [requiredPermission, userHasAccess, isAuthenticated, location.pathname, toast, speak, user?.role]);
 
   if (isLoading) {
     return (
