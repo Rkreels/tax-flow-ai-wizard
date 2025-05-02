@@ -77,7 +77,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children, requiredPermission })
       </Sheet>
 
       <div className="flex flex-1 flex-col overflow-hidden">
-        <TopBar onMenuClick={toggleMobileSidebarOpen} />
+        <TopBar onMenuClick={toggleMobileSidebar} />
         <main className="flex-1 overflow-y-auto p-4 md:p-6">
           {children}
         </main>
