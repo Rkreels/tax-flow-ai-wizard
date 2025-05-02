@@ -2,9 +2,11 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import voiceAssistant from '@/utils/VoiceAssistant';
+import { Volume2, VolumeX } from "lucide-react";
 
 interface VoiceAssistantContextType {
   isMuted: boolean;
+  isSpeaking: boolean;
   toggleMute: () => void;
   speak: (text: string) => void;
   speakElementMessage: (elementId: string) => void;
@@ -13,8 +15,19 @@ interface VoiceAssistantContextType {
 const VoiceAssistantContext = createContext<VoiceAssistantContextType | undefined>(undefined);
 
 export const VoiceAssistantProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [isMuted, setIsMuted] = useState<boolean>(false);
+  const [isMuted, setIsMuted] = useState<boolean>(voiceAssistant.getMutedState());
+  const [isSpeaking, setIsSpeaking] = useState<boolean>(false);
   const location = useLocation();
+  
+  // Update speaking state
+  useEffect(() => {
+    const checkSpeakingStatus = () => {
+      setIsSpeaking(voiceAssistant.isSpeaking());
+    };
+    
+    const interval = setInterval(checkSpeakingStatus, 200);
+    return () => clearInterval(interval);
+  }, []);
   
   // Speak page descriptions when route changes
   useEffect(() => {
@@ -55,10 +68,25 @@ export const VoiceAssistantProvider: React.FC<{ children: React.ReactNode }> = (
   const speakElementMessage = (elementId: string) => {
     voiceAssistant.speakElementMessage(elementId);
   };
-  
+
   return (
-    <VoiceAssistantContext.Provider value={{ isMuted, toggleMute, speak, speakElementMessage }}>
+    <VoiceAssistantContext.Provider value={{ 
+      isMuted, 
+      isSpeaking,
+      toggleMute, 
+      speak, 
+      speakElementMessage 
+    }}>
       {children}
+      <div className="fixed bottom-4 right-4 z-50">
+        <button 
+          onClick={toggleMute}
+          className="flex items-center justify-center h-10 w-10 rounded-full bg-primary text-primary-foreground shadow hover:bg-primary/90 transition"
+          aria-label={isMuted ? "Enable voice assistant" : "Disable voice assistant"}
+        >
+          {isMuted ? <VolumeX size={18} /> : <Volume2 size={18} className={isSpeaking ? "animate-pulse" : ""} />}
+        </button>
+      </div>
     </VoiceAssistantContext.Provider>
   );
 };

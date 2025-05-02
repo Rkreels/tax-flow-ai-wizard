@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "@/hooks/use-theme";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { VoiceAssistantProvider } from "@/contexts/VoiceAssistantContext";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import Unauthorized from "./pages/Unauthorized";
@@ -33,27 +34,29 @@ const App: React.FC = () => (
       <TooltipProvider>
         <AuthProvider>
           <BrowserRouter>
-            <Routes>
-              <Route path="/login" element={<Login />} />
-              <Route path="/" element={<Dashboard />} />
-              <Route path="/filing" element={<TaxFilingPage />} />
-              <Route path="/assistant" element={<AssistantPage />} />
-              <Route path="/returns" element={<ReturnsPage />} />
-              <Route path="/profile" element={<ProfilePage />} />
-              <Route path="/documents" element={<DocumentsPage />} />
-              <Route path="/help" element={<HelpPage />} />
-              <Route path="/analytics" element={<AnalyticsPage />} />
-              <Route path="/tax-rules" element={<TaxRulesPage />} />
-              <Route path="/users" element={<UsersPage />} />
-              <Route path="/settings" element={<SettingsPage />} />
-              <Route path="/requests" element={<RequestsPage />} />
-              <Route path="/knowledge" element={<KnowledgeBasePage />} />
-              <Route path="/unauthorized" element={<Unauthorized />} />
-              <Route path="*" element={<NotFound />} />
-            </Routes>
+            <VoiceAssistantProvider>
+              <Routes>
+                <Route path="/login" element={<Login />} />
+                <Route path="/" element={<Dashboard />} />
+                <Route path="/filing" element={<TaxFilingPage />} />
+                <Route path="/assistant" element={<AssistantPage />} />
+                <Route path="/returns" element={<ReturnsPage />} />
+                <Route path="/profile" element={<ProfilePage />} />
+                <Route path="/documents" element={<DocumentsPage />} />
+                <Route path="/help" element={<HelpPage />} />
+                <Route path="/analytics" element={<AnalyticsPage />} />
+                <Route path="/tax-rules" element={<TaxRulesPage />} />
+                <Route path="/users" element={<UsersPage />} />
+                <Route path="/settings" element={<SettingsPage />} />
+                <Route path="/requests" element={<RequestsPage />} />
+                <Route path="/knowledge" element={<KnowledgeBasePage />} />
+                <Route path="/unauthorized" element={<Unauthorized />} />
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+              <Toaster />
+              <Sonner />
+            </VoiceAssistantProvider>
           </BrowserRouter>
-          <Toaster />
-          <Sonner />
         </AuthProvider>
       </TooltipProvider>
     </ThemeProvider>

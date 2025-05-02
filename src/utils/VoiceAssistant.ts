@@ -6,6 +6,7 @@ class VoiceAssistant {
   private isMuted: boolean = false;
   private voiceMessages: Record<string, string>;
   private pageDescriptions: Record<string, string>;
+  private currentlySpeaking: boolean = false;
 
   constructor() {
     this.synth = window.speechSynthesis;
@@ -84,6 +85,10 @@ class VoiceAssistant {
     const utterance = new SpeechSynthesisUtterance(text);
     // Set a slightly slower rate for better clarity
     utterance.rate = 0.9;
+    this.currentlySpeaking = true;
+    utterance.onend = () => {
+      this.currentlySpeaking = false;
+    };
     this.synth.speak(utterance);
   }
 
@@ -103,6 +108,7 @@ class VoiceAssistant {
     this.isMuted = !this.isMuted;
     if (this.isMuted && this.synth.speaking) {
       this.synth.cancel();
+      this.currentlySpeaking = false;
     } else if (!this.isMuted) {
       this.speak("Voice assistant activated");
     }
@@ -110,13 +116,18 @@ class VoiceAssistant {
   }
 
   public isSpeaking(): boolean {
-    return this.synth.speaking;
+    return this.currentlySpeaking;
+  }
+
+  public getMutedState(): boolean {
+    return this.isMuted;
   }
 
   public mute(): void {
     this.isMuted = true;
     if (this.synth.speaking) {
       this.synth.cancel();
+      this.currentlySpeaking = false;
     }
   }
 
@@ -129,4 +140,3 @@ class VoiceAssistant {
 // Create a singleton instance
 const voiceAssistant = new VoiceAssistant();
 export default voiceAssistant;
-
