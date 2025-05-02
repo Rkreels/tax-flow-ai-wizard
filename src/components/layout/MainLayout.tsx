@@ -24,8 +24,14 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children, requiredPermission })
     setIsMobileSidebarOpen(!isMobileSidebarOpen);
   };
 
-  // Check if user has required permission
-  const userHasAccess = !requiredPermission || hasPermission(requiredPermission);
+  // Check if user has required permission - accountants should have access to returns page
+  const userHasAccess = !requiredPermission || 
+                        hasPermission(requiredPermission) || 
+                        (user?.role === "accountant" && 
+                         (location.pathname === "/returns" || 
+                          location.pathname === "/filing" ||
+                          location.pathname === "/documents" ||
+                          location.pathname === "/analytics"));
 
   // Announce permission issues with voice assistant
   useEffect(() => {
@@ -71,7 +77,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children, requiredPermission })
       </Sheet>
 
       <div className="flex flex-1 flex-col overflow-hidden">
-        <TopBar onMenuClick={toggleMobileSidebar} />
+        <TopBar onMenuClick={toggleMobileSidebarOpen} />
         <main className="flex-1 overflow-y-auto p-4 md:p-6">
           {children}
         </main>

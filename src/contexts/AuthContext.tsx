@@ -92,10 +92,13 @@ const ROLE_PERMISSIONS: Record<UserRole, string[]> = {
   accountant: [
     "dashboard",
     "view_assigned_returns", 
-    "edit_assigned_returns", 
+    "view_all_returns", // Added to ensure tax professionals can access returns
+    "edit_assigned_returns",
+    "edit_all_returns", // Added to ensure they can edit returns
     "provide_tax_advice", 
     "view_analytics", 
-    "upload_documents"
+    "upload_documents",
+    "view_clients" // Added for client access
   ],
 };
 
