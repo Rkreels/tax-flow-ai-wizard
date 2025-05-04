@@ -13,6 +13,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useTheme } from "@/hooks/use-theme";
+import VoiceAssistantToggle from "@/components/VoiceAssistantToggle";
 
 interface TopBarProps {
   onMenuClick?: () => void;
@@ -41,6 +42,9 @@ const TopBar: React.FC<TopBarProps> = ({ onMenuClick }) => {
         </div>
         
         <div className="ml-auto flex items-center space-x-4">
+          {/* Voice Assistant Toggle */}
+          <VoiceAssistantToggle />
+          
           <Button variant="ghost" size="icon">
             <Bell className="h-5 w-5" />
             <span className="sr-only">Notifications</span>

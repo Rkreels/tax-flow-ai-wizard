@@ -14,33 +14,33 @@ class VoiceAssistant {
     // Voice messages for interactive elements
     this.voiceMessages = {
       // Dashboard buttons
-      allReturnsBtn: "Navigating to All Returns",
-      usersBtn: "Opening Users Management",
-      taxRulesBtn: "Loading Tax Rules Configuration",
+      allReturnsBtn: "Navigating to All Returns page",
+      usersBtn: "Opening Users Management page",
+      taxRulesBtn: "Loading Tax Rules Configuration page",
       analyticsBtn: "Displaying Analytics Dashboard",
       settingsBtn: "Accessing System Settings",
       
       // System status
-      authStatus: "Authentication Service: Operational",
-      taxEngineStatus: "Tax Calculation Engine: Operational",
-      docProcessingStatus: "Document Processing: Operational",
-      aiAssistantStatus: "AI Assistant: Degraded",
+      authStatus: "Authentication Service: Operational. All user login and verification services are working properly.",
+      taxEngineStatus: "Tax Calculation Engine: Operational. Tax calculations are being processed correctly.",
+      docProcessingStatus: "Document Processing: Operational. Document uploads and processing are working as expected.",
+      aiAssistantStatus: "AI Assistant: Degraded. Some advanced tax advice features may be limited.",
       
       // Navigation actions
-      navDashboard: "Navigating to Dashboard",
-      navFiling: "Starting tax filing process",
-      navAssistant: "Opening AI tax assistant",
-      navReturns: "Viewing your tax returns",
-      navProfile: "Accessing your profile",
-      navDocuments: "Managing your documents",
-      navHelp: "Opening help center",
+      navDashboard: "Navigating to Dashboard. Here you'll find an overview of your tax activities.",
+      navFiling: "Starting tax filing process. You can complete your tax return step by step.",
+      navAssistant: "Opening AI tax assistant. Ask any tax-related questions for personalized guidance.",
+      navReturns: "Viewing your tax returns. See the status of all your submitted and in-progress returns.",
+      navProfile: "Accessing your profile. You can update your personal information and preferences.",
+      navDocuments: "Managing your documents. Upload, organize, and access all your tax-related files.",
+      navHelp: "Opening help center. Find answers to common questions and get support.",
       
       // General actions
-      logout: "Logging out of your account",
-      uploadDocument: "Uploading document",
-      downloadPdf: "Downloading PDF",
-      saveChanges: "Saving your changes",
-      cancelAction: "Cancelling action"
+      logout: "Logging out of your account. You'll need to sign in again to access your data.",
+      uploadDocument: "Uploading document. Please select a file to upload to your tax documents.",
+      downloadPdf: "Downloading PDF. Your tax document will be saved to your device.",
+      saveChanges: "Saving your changes. Your updated information has been recorded.",
+      cancelAction: "Cancelling action. No changes have been made to your information."
     };
     
     // Page descriptions for when pages are loaded
@@ -110,7 +110,7 @@ class VoiceAssistant {
       this.synth.cancel();
       this.currentlySpeaking = false;
     } else if (!this.isMuted) {
-      this.speak("Voice assistant activated");
+      this.speak("Voice assistant activated. I can guide you through using this tax application. Click on elements or navigate to pages for information.");
     }
     return this.isMuted;
   }
@@ -133,7 +133,7 @@ class VoiceAssistant {
 
   public unmute(): void {
     this.isMuted = false;
-    this.speak("Voice assistant activated");
+    this.speak("Voice assistant activated. I can guide you through using this tax application.");
   }
 }
 

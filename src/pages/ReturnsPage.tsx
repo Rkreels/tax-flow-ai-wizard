@@ -89,10 +89,10 @@ const ReturnsPage: React.FC = () => {
   // Provide voice guidance when the page loads
   React.useEffect(() => {
     const pageDescription = isAccountant ? 
-      "Client tax returns page. Review and manage tax returns for your clients." :
+      "Client tax returns page. Review and manage tax returns for your clients. You can view details, review returns, and track their status." :
       isAdmin ? 
-      "All tax returns page. View and manage all users' tax returns." : 
-      "My tax returns page. View and manage your personal tax returns.";
+      "All tax returns page. View and manage all users' tax returns. You have full access to view, edit, and delete returns." : 
+      "My tax returns page. View and manage your personal tax returns. You can continue filing incomplete returns or check the status of submitted returns.";
     
     speak(pageDescription);
   }, [speak, isAdmin, isAccountant]);
@@ -101,9 +101,11 @@ const ReturnsPage: React.FC = () => {
     setReturns(returns.filter(r => r.id !== id));
     setIsDeleteDialogOpen(false);
     toast.success("Tax return deleted successfully");
+    speak("Tax return deleted successfully.");
   };
 
   const handleReview = (taxReturn: TaxReturn) => {
+    speak(`Opening ${taxReturn.clientName ? taxReturn.clientName + "'s" : "your"} ${taxReturn.year} ${taxReturn.type} return for ${isAccountant ? "review" : "filing"}.`);
     window.location.href = `/filing?id=${taxReturn.id}${taxReturn.clientId ? `&clientId=${taxReturn.clientId}` : ''}`;
   };
 
@@ -138,7 +140,12 @@ const ReturnsPage: React.FC = () => {
           </h1>
           
           {!isSupport && (
-            <Button onClick={() => window.location.href = "/filing"}>
+            <Button 
+              onClick={() => {
+                speak("Creating a new tax return.");
+                window.location.href = "/filing";
+              }}
+            >
               <Plus className="mr-2 h-4 w-4" /> New Return
             </Button>
           )}
@@ -174,6 +181,7 @@ const ReturnsPage: React.FC = () => {
                     size="sm"
                     variant="outline"
                     onClick={() => {
+                      speak(`Viewing details for ${taxReturn.clientName ? taxReturn.clientName + "'s" : ""} ${taxReturn.year} ${taxReturn.type} return.`);
                       setSelectedReturn(taxReturn);
                       setIsViewDialogOpen(true);
                     }}
@@ -199,6 +207,7 @@ const ReturnsPage: React.FC = () => {
                       variant="outline"
                       className="text-destructive hover:bg-destructive hover:text-destructive-foreground"
                       onClick={() => {
+                        speak("Preparing to delete tax return. Please confirm this action.");
                         setSelectedReturn(taxReturn);
                         setIsDeleteDialogOpen(true);
                       }}
@@ -236,7 +245,10 @@ const ReturnsPage: React.FC = () => {
               </div>
             </div>
             <DialogFooter>
-              <Button onClick={() => setIsViewDialogOpen(false)}>Close</Button>
+              <Button onClick={() => {
+                speak("Closing details view.");
+                setIsViewDialogOpen(false);
+              }}>Close</Button>
               {selectedReturn && canEdit(selectedReturn.status) && (
                 <Button onClick={() => handleReview(selectedReturn)}>
                   {isAccountant ? "Review Return" : "Continue Filing"}
@@ -256,10 +268,17 @@ const ReturnsPage: React.FC = () => {
               </DialogDescription>
             </DialogHeader>
             <DialogFooter>
-              <Button variant="outline" onClick={() => setIsDeleteDialogOpen(false)}>Cancel</Button>
+              <Button variant="outline" onClick={() => {
+                speak("Deletion canceled.");
+                setIsDeleteDialogOpen(false);
+              }}>Cancel</Button>
               <Button 
                 variant="destructive" 
-                onClick={() => selectedReturn && handleDelete(selectedReturn.id)}
+                onClick={() => {
+                  if (selectedReturn) {
+                    handleDelete(selectedReturn.id);
+                  }
+                }}
               >
                 Delete
               </Button>
