@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import MainLayout from "@/components/layout/MainLayout";
 import { Button } from "@/components/ui/button";
@@ -36,7 +35,7 @@ const ReturnsPage: React.FC = () => {
       id: "1",
       name: "2023 Personal Tax Return",
       year: "2023",
-      status: "in_progress",
+      status: "in_progress" as const,
       type: "Individual",
       lastUpdated: "2025-04-10"
     },
@@ -44,7 +43,7 @@ const ReturnsPage: React.FC = () => {
       id: "2",
       name: "2022 Personal Tax Return",
       year: "2022",
-      status: "submitted",
+      status: "submitted" as const,
       type: "Individual",
       lastUpdated: "2024-03-15"
     },
@@ -53,7 +52,7 @@ const ReturnsPage: React.FC = () => {
         id: "client-ml",
         name: "2023 Individual Return",
         year: "2023",
-        status: "in_progress",
+        status: "in_progress" as const,
         type: "Individual",
         lastUpdated: "2025-04-08",
         clientId: "client-ml",
@@ -63,7 +62,7 @@ const ReturnsPage: React.FC = () => {
         id: "client-rg",
         name: "2023 Schedule C Business",
         year: "2023",
-        status: "submitted",
+        status: "submitted" as const,
         type: "Business",
         lastUpdated: "2025-04-05",
         clientId: "client-rg",
@@ -73,7 +72,7 @@ const ReturnsPage: React.FC = () => {
         id: "client-tw",
         name: "2023 Rental Income",
         year: "2023",
-        status: "draft",
+        status: "draft" as const,
         type: "Schedule E",
         lastUpdated: "2025-04-02",
         clientId: "client-tw",
