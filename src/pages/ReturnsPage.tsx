@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import MainLayout from "@/components/layout/MainLayout";
 import { Button } from "@/components/ui/button";
@@ -8,6 +9,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { useVoiceAssistant } from "@/contexts/VoiceAssistantContext";
 import { useLocation } from "react-router-dom";
+import TaxReturnActions from "@/components/tax-return/TaxReturnActions";
 
 interface TaxReturn {
   id: string;
@@ -88,10 +90,10 @@ const ReturnsPage: React.FC = () => {
   // Provide voice guidance when the page loads
   React.useEffect(() => {
     const pageDescription = isAccountant ? 
-      "Client tax returns page. Review and manage tax returns for your clients. You can view details, review returns, and track their status." :
+      "Client tax returns page. Review and manage tax returns for your clients. You can view details, save, print, submit returns, and track their status." :
       isAdmin ? 
-      "All tax returns page. View and manage all users' tax returns. You have full access to view, edit, and delete returns." : 
-      "My tax returns page. View and manage your personal tax returns. You can continue filing incomplete returns or check the status of submitted returns.";
+      "All tax returns page. View and manage all users' tax returns. You have full access to view, edit, save, print, submit, and delete returns." : 
+      "My tax returns page. View and manage your personal tax returns. You can continue filing incomplete returns, save drafts, print copies, submit completed returns, or check the status of submitted returns.";
     
     speak(pageDescription);
   }, [speak, isAdmin, isAccountant]);
@@ -101,6 +103,22 @@ const ReturnsPage: React.FC = () => {
     setIsDeleteDialogOpen(false);
     toast.success("Tax return deleted successfully");
     speak("Tax return deleted successfully.");
+  };
+
+  const handleSave = (id: string) => {
+    setReturns(returns.map(r => 
+      r.id === id 
+        ? { ...r, lastUpdated: new Date().toISOString().split('T')[0] }
+        : r
+    ));
+  };
+
+  const handleSubmit = (id: string) => {
+    setReturns(returns.map(r => 
+      r.id === id 
+        ? { ...r, status: "submitted" as const, lastUpdated: new Date().toISOString().split('T')[0] }
+        : r
+    ));
   };
 
   const handleReview = (taxReturn: TaxReturn) => {
@@ -174,8 +192,9 @@ const ReturnsPage: React.FC = () => {
                 <p><span className="font-medium">Type:</span> {taxReturn.type}</p>
                 <p><span className="font-medium">Last Updated:</span> {taxReturn.lastUpdated}</p>
               </CardContent>
-              <CardFooter className="flex justify-end border-t bg-muted/50 p-2">
-                <div className="flex space-x-2">
+              <CardFooter className="flex flex-col space-y-2 border-t bg-muted/50 p-3">
+                {/* Action buttons row */}
+                <div className="flex justify-end space-x-2 w-full">
                   <Button
                     size="sm"
                     variant="outline"
@@ -216,6 +235,13 @@ const ReturnsPage: React.FC = () => {
                     </Button>
                   )}
                 </div>
+                
+                {/* Tax return actions row */}
+                <TaxReturnActions 
+                  taxReturn={taxReturn} 
+                  onSave={handleSave}
+                  onSubmit={handleSubmit}
+                />
               </CardFooter>
             </Card>
           ))}

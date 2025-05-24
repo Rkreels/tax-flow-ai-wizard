@@ -1,7 +1,7 @@
 
 import React from "react";
 import { useAuth } from "@/contexts/AuthContext";
-import { Menu, Bell, Moon, Sun } from "lucide-react";
+import { Menu, Bell, Moon, Sun, User, Settings, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import {
@@ -13,7 +13,9 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useTheme } from "@/hooks/use-theme";
+import { useNavigate } from "react-router-dom";
 import VoiceAssistantToggle from "@/components/VoiceAssistantToggle";
+import { useVoiceAssistant } from "@/contexts/VoiceAssistantContext";
 
 interface TopBarProps {
   onMenuClick?: () => void;
@@ -22,6 +24,8 @@ interface TopBarProps {
 const TopBar: React.FC<TopBarProps> = ({ onMenuClick }) => {
   const { user, logout } = useAuth();
   const { theme, setTheme } = useTheme();
+  const navigate = useNavigate();
+  const { speak } = useVoiceAssistant();
   
   const getInitials = (name: string) => {
     return name
@@ -29,6 +33,32 @@ const TopBar: React.FC<TopBarProps> = ({ onMenuClick }) => {
       .map((n) => n[0])
       .join("")
       .toUpperCase();
+  };
+
+  const handleProfileClick = () => {
+    speak("Opening your profile page where you can manage your personal information and settings.");
+    navigate("/profile");
+  };
+
+  const handleSettingsClick = () => {
+    if (user?.role === "admin") {
+      speak("Opening admin settings where you can manage system-wide configurations.");
+      navigate("/settings");
+    } else {
+      speak("Opening your personal settings.");
+      navigate("/profile");
+    }
+  };
+
+  const handleLogout = () => {
+    speak("Logging you out. Thank you for using TaxFlow AI.");
+    logout();
+  };
+
+  const handleThemeToggle = () => {
+    const newTheme = theme === "dark" ? "light" : "dark";
+    setTheme(newTheme);
+    speak(`Switched to ${newTheme} theme.`);
   };
 
   return (
@@ -45,7 +75,11 @@ const TopBar: React.FC<TopBarProps> = ({ onMenuClick }) => {
           {/* Voice Assistant Toggle */}
           <VoiceAssistantToggle />
           
-          <Button variant="ghost" size="icon">
+          <Button 
+            variant="ghost" 
+            size="icon"
+            onClick={() => speak("Notifications feature coming soon.")}
+          >
             <Bell className="h-5 w-5" />
             <span className="sr-only">Notifications</span>
           </Button>
@@ -53,7 +87,7 @@ const TopBar: React.FC<TopBarProps> = ({ onMenuClick }) => {
           <Button
             variant="ghost"
             size="icon"
-            onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+            onClick={handleThemeToggle}
           >
             {theme === "dark" ? (
               <Sun className="h-5 w-5" />
@@ -84,10 +118,21 @@ const TopBar: React.FC<TopBarProps> = ({ onMenuClick }) => {
                   Role: {user?.role.charAt(0).toUpperCase() + user?.role.slice(1)}
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem>Profile</DropdownMenuItem>
-                <DropdownMenuItem>Settings</DropdownMenuItem>
+                <DropdownMenuItem onClick={handleProfileClick} className="cursor-pointer">
+                  <User className="mr-2 h-4 w-4" />
+                  Profile
+                </DropdownMenuItem>
+                {user?.role === "admin" && (
+                  <DropdownMenuItem onClick={handleSettingsClick} className="cursor-pointer">
+                    <Settings className="mr-2 h-4 w-4" />
+                    Settings
+                  </DropdownMenuItem>
+                )}
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={logout}>Log out</DropdownMenuItem>
+                <DropdownMenuItem onClick={handleLogout} className="cursor-pointer">
+                  <LogOut className="mr-2 h-4 w-4" />
+                  Log out
+                </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
