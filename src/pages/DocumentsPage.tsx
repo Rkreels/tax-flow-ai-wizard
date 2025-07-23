@@ -3,15 +3,17 @@ import React, { useState } from "react";
 import MainLayout from "@/components/layout/MainLayout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/contexts/AuthContext";
 import { Download, EyeIcon, FileText, MoreVertical, Plus, Trash2, Upload } from "lucide-react";
 import { toast } from "sonner";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { useVoiceAssistant } from "@/contexts/VoiceAssistantContext";
+import DocumentUpload from "@/components/documents/DocumentUpload";
+import DocumentViewer from "@/components/documents/DocumentViewer";
 
-interface Document {
+interface TaxDocument {
   id: string;
   name: string;
   type: string;
@@ -19,17 +21,21 @@ interface Document {
   uploadDate: string;
   category: "income" | "deduction" | "personal" | "other";
   taxYear: string;
+  file?: File;
 }
 
 const DocumentsPage: React.FC = () => {
   const { user } = useAuth();
+  const { speak } = useVoiceAssistant();
   const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [activeTab, setActiveTab] = useState<string>("all");
   const [selectedDocuments, setSelectedDocuments] = useState<string[]>([]);
+  const [viewingDocument, setViewingDocument] = useState<TaxDocument | null>(null);
+  const [isViewerOpen, setIsViewerOpen] = useState(false);
   
   // Sample documents data
-  const [documents, setDocuments] = useState<Document[]>([
+  const [documents, setDocuments] = useState<TaxDocument[]>([
     {
       id: "1",
       name: "W-2 Form.pdf",
@@ -87,8 +93,10 @@ const DocumentsPage: React.FC = () => {
   ]);
 
   const handleDeleteDocument = (id: string) => {
+    const doc = documents.find(d => d.id === id);
     setDocuments(documents.filter(doc => doc.id !== id));
     toast.success("Document deleted successfully");
+    speak(`${doc?.name || 'Document'} deleted successfully.`);
   };
 
   const handleDeleteSelected = () => {
@@ -105,9 +113,43 @@ const DocumentsPage: React.FC = () => {
     }
   };
 
-  const handleUpload = () => {
-    setIsUploadDialogOpen(false);
-    toast.success("Document uploaded successfully");
+  const handleUpload = (newDocument: TaxDocument) => {
+    setDocuments(prev => [...prev, newDocument]);
+  };
+
+  const handleViewDocument = (document: TaxDocument) => {
+    setViewingDocument(document);
+    setIsViewerOpen(true);
+    speak(`Opening ${document.name} for viewing.`);
+  };
+
+  const handleDownloadDocument = (document: TaxDocument) => {
+    speak(`Downloading ${document.name}.`);
+    
+    // Create a blob URL for download
+    if (document.file) {
+      const url = URL.createObjectURL(document.file);
+      const a = window.document.createElement('a');
+      a.href = url;
+      a.download = document.name;
+      window.document.body.appendChild(a);
+      a.click();
+      window.document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } else {
+      // Simulate download for demo documents
+      const element = window.document.createElement('a');
+      const file = new Blob([`This is a demo ${document.name} document for tax year ${document.taxYear}`], 
+        { type: 'text/plain' });
+      element.href = URL.createObjectURL(file);
+      element.download = document.name;
+      window.document.body.appendChild(element);
+      element.click();
+      window.document.body.removeChild(element);
+    }
+    
+    toast.success("Document downloaded successfully");
+    speak("Document downloaded to your device.");
   };
 
   const getFileIcon = (type: string) => {
@@ -138,7 +180,10 @@ const DocumentsPage: React.FC = () => {
                 Delete Selected ({selectedDocuments.length})
               </Button>
             )}
-            <Button onClick={() => setIsUploadDialogOpen(true)}>
+            <Button onClick={() => {
+              speak("Opening document upload dialog.");
+              setIsUploadDialogOpen(true);
+            }}>
               <Upload className="mr-2 h-4 w-4" />
               Upload Document
             </Button>
@@ -172,6 +217,8 @@ const DocumentsPage: React.FC = () => {
                   isSelected={selectedDocuments.includes(doc.id)}
                   onToggleSelect={handleToggleSelect}
                   onDelete={handleDeleteDocument}
+                  onView={handleViewDocument}
+                  onDownload={handleDownloadDocument}
                 />
               ))}
             </div>
@@ -189,6 +236,8 @@ const DocumentsPage: React.FC = () => {
                       isSelected={selectedDocuments.includes(doc.id)}
                       onToggleSelect={handleToggleSelect}
                       onDelete={handleDeleteDocument}
+                      onView={handleViewDocument}
+                      onDownload={handleDownloadDocument}
                     />
                   ))
                 }
@@ -198,74 +247,33 @@ const DocumentsPage: React.FC = () => {
         </Tabs>
         
         {/* Upload Document Dialog */}
-        <Dialog open={isUploadDialogOpen} onOpenChange={setIsUploadDialogOpen}>
-          <DialogContent className="sm:max-w-md">
-            <DialogHeader>
-              <DialogTitle>Upload Document</DialogTitle>
-              <DialogDescription>
-                Upload tax-related documents to your account
-              </DialogDescription>
-            </DialogHeader>
-            <div className="space-y-4 py-4">
-              <div className="border rounded-md border-dashed border-gray-300 flex flex-col items-center justify-center gap-2 p-6">
-                <div className="rounded-full bg-gray-100 p-3">
-                  <Upload className="h-6 w-6 text-gray-500" />
-                </div>
-                <p className="text-sm text-center font-medium">Drag and drop files here or click to browse</p>
-                <p className="text-xs text-center text-gray-500">Supports: PDF, JPG, PNG, ZIP (max 10MB)</p>
-                <Button size="sm" variant="outline" className="mt-2">Browse Files</Button>
-              </div>
-              
-              <div className="space-y-2">
-                <label htmlFor="document-name" className="text-sm font-medium">Document Name</label>
-                <Input id="document-name" placeholder="My tax document" />
-              </div>
-              
-              <div className="space-y-2">
-                <label htmlFor="document-category" className="text-sm font-medium">Category</label>
-                <select
-                  id="document-category"
-                  className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
-                >
-                  <option value="income">Income</option>
-                  <option value="deduction">Deduction</option>
-                  <option value="personal">Personal</option>
-                  <option value="other">Other</option>
-                </select>
-              </div>
-              
-              <div className="space-y-2">
-                <label htmlFor="tax-year" className="text-sm font-medium">Tax Year</label>
-                <select
-                  id="tax-year"
-                  className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
-                >
-                  <option value="2023">2023</option>
-                  <option value="2022">2022</option>
-                  <option value="2021">2021</option>
-                  <option value="2020">2020</option>
-                </select>
-              </div>
-            </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setIsUploadDialogOpen(false)}>Cancel</Button>
-              <Button onClick={handleUpload}>Upload</Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+        <DocumentUpload
+          isOpen={isUploadDialogOpen}
+          onClose={() => setIsUploadDialogOpen(false)}
+          onUpload={handleUpload}
+        />
+
+        {/* Document Viewer */}
+        <DocumentViewer
+          document={viewingDocument}
+          isOpen={isViewerOpen}
+          onClose={() => setIsViewerOpen(false)}
+        />
       </div>
     </MainLayout>
   );
 };
 
 interface DocumentCardProps {
-  document: Document;
+  document: TaxDocument;
   isSelected: boolean;
   onToggleSelect: (id: string) => void;
   onDelete: (id: string) => void;
+  onView: (document: TaxDocument) => void;
+  onDownload: (document: TaxDocument) => void;
 }
 
-const DocumentCard: React.FC<DocumentCardProps> = ({ document, isSelected, onToggleSelect, onDelete }) => {
+const DocumentCard: React.FC<DocumentCardProps> = ({ document, isSelected, onToggleSelect, onDelete, onView, onDownload }) => {
   const getDocumentTypeClass = (type: string) => {
     switch (type.toLowerCase()) {
       case "pdf": return "bg-red-100 text-red-700";
@@ -302,11 +310,11 @@ const DocumentCard: React.FC<DocumentCardProps> = ({ document, isSelected, onTog
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem>
+              <DropdownMenuItem onClick={() => onView(document)}>
                 <EyeIcon className="mr-2 h-4 w-4" />
                 <span>View</span>
               </DropdownMenuItem>
-              <DropdownMenuItem>
+              <DropdownMenuItem onClick={() => onDownload(document)}>
                 <Download className="mr-2 h-4 w-4" />
                 <span>Download</span>
               </DropdownMenuItem>

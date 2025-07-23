@@ -1,17 +1,24 @@
 
-import React from "react";
+import React, { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ArrowRight } from "lucide-react";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { useVoiceAssistant } from "@/contexts/VoiceAssistantContext";
 
 interface PersonalInfoStepProps {
   onNext: () => void;
 }
 
 const PersonalInfoStep: React.FC<PersonalInfoStepProps> = ({ onNext }) => {
+  const { speak } = useVoiceAssistant();
+
+  useEffect(() => {
+    speak("Personal information step. Please fill in your personal details including name, social security number, date of birth, address, and filing status.");
+  }, [speak]);
+
   return (
     <div className="space-y-6">
       <div className="space-y-2">

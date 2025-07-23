@@ -1,9 +1,11 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ArrowLeft, ArrowRight, Save, CheckCircle2, HelpCircle } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { toast } from "sonner";
+import { useVoiceAssistant } from "@/contexts/VoiceAssistantContext";
 import PersonalInfoStep from "./steps/PersonalInfoStep";
 import IncomeStep from "./steps/IncomeStep";
 import DeductionsStep from "./steps/DeductionsStep";
@@ -19,8 +21,16 @@ const steps: { id: TaxFilingStep; label: string }[] = [
 ];
 
 const TaxFilingWizard: React.FC = () => {
+  const { speak } = useVoiceAssistant();
   const [currentStep, setCurrentStep] = useState<TaxFilingStep>("personal");
   const [completedSteps, setCompletedSteps] = useState<Set<TaxFilingStep>>(new Set());
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+
+  // Provide voice guidance when component mounts
+  useEffect(() => {
+    speak("Welcome to the tax filing wizard. Complete each step to file your tax return. You are currently on the personal information step.");
+  }, [speak]);
 
   const currentStepIndex = steps.findIndex((step) => step.id === currentStep);
 
@@ -32,14 +42,48 @@ const TaxFilingWizard: React.FC = () => {
 
     // Move to the next step
     if (currentStepIndex < steps.length - 1) {
-      setCurrentStep(steps[currentStepIndex + 1].id);
+      const nextStep = steps[currentStepIndex + 1];
+      setCurrentStep(nextStep.id);
+      speak(`Moving to ${nextStep.label} step.`);
     }
   };
 
   const handlePrevious = () => {
     if (currentStepIndex > 0) {
-      setCurrentStep(steps[currentStepIndex - 1].id);
+      const prevStep = steps[currentStepIndex - 1];
+      setCurrentStep(prevStep.id);
+      speak(`Going back to ${prevStep.label} step.`);
     }
+  };
+
+  const handleSave = async () => {
+    setIsSaving(true);
+    speak("Saving your tax return progress.");
+    
+    // Simulate save operation
+    await new Promise(resolve => setTimeout(resolve, 1500));
+    
+    toast.success("Tax return saved successfully");
+    speak("Your tax return has been saved. You can continue filing later from where you left off.");
+    setIsSaving(false);
+  };
+
+  const handleSubmit = async () => {
+    setIsSubmitting(true);
+    speak("Submitting your tax return to the IRS. Please wait.");
+    
+    // Simulate submission process
+    await new Promise(resolve => setTimeout(resolve, 3000));
+    
+    toast.success("Tax return submitted successfully!");
+    speak("Congratulations! Your tax return has been successfully submitted to the IRS. You will receive a confirmation email shortly.");
+    setIsSubmitting(false);
+  };
+
+  const handleHelp = () => {
+    speak("Opening tax assistant for help. You can ask questions about tax filing, deductions, or any step in the process.");
+    // In a real app, this would open the tax assistant
+    toast.info("Tax assistant is available to help you with any questions");
   };
 
   const renderStepContent = () => {
@@ -127,8 +171,13 @@ const TaxFilingWizard: React.FC = () => {
         </Button>
         
         <div className="flex space-x-2">
-          <Button variant="outline">
-            <Save className="mr-2 h-4 w-4" /> Save for Later
+          <Button 
+            variant="outline" 
+            onClick={handleSave}
+            disabled={isSaving}
+          >
+            <Save className="mr-2 h-4 w-4" /> 
+            {isSaving ? "Saving..." : "Save for Later"}
           </Button>
           
           {currentStep !== "review" && (
@@ -138,8 +187,13 @@ const TaxFilingWizard: React.FC = () => {
           )}
           
           {currentStep === "review" && (
-            <Button className="bg-green-600 hover:bg-green-700">
-              Submit Return <CheckCircle2 className="ml-2 h-4 w-4" />
+            <Button 
+              className="bg-green-600 hover:bg-green-700"
+              onClick={handleSubmit}
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? "Submitting..." : "Submit Return"} 
+              <CheckCircle2 className="ml-2 h-4 w-4" />
             </Button>
           )}
         </div>
@@ -149,7 +203,7 @@ const TaxFilingWizard: React.FC = () => {
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
-              <Button variant="ghost" size="sm">
+              <Button variant="ghost" size="sm" onClick={handleHelp}>
                 <HelpCircle className="mr-2 h-4 w-4" /> Need help?
               </Button>
             </TooltipTrigger>

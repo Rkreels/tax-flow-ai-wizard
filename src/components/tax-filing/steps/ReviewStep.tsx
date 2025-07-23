@@ -1,15 +1,127 @@
 
-import React from "react";
+import React, { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { ArrowDown, Download, Printer } from "lucide-react";
+import { toast } from "sonner";
+import { useVoiceAssistant } from "@/contexts/VoiceAssistantContext";
 
 interface ReviewStepProps {
   onPrevious: () => void;
 }
 
 const ReviewStep: React.FC<ReviewStepProps> = ({ onPrevious }) => {
+  const { speak } = useVoiceAssistant();
+
+  useEffect(() => {
+    speak("Review and submit step. Please review your tax return summary, personal information, income, and deductions before submitting. Your estimated refund is $5,018.");
+  }, [speak]);
+
+  const handlePrintPreview = () => {
+    speak("Opening print preview of your tax return.");
+    
+    const printWindow = window.open('', '_blank');
+    if (printWindow) {
+      printWindow.document.write(`
+        <html>
+          <head>
+            <title>Tax Return - Print Preview</title>
+            <style>
+              body { font-family: Arial, sans-serif; margin: 40px; }
+              .header { border-bottom: 2px solid #333; padding-bottom: 20px; margin-bottom: 30px; }
+              .section { margin-bottom: 20px; }
+              .summary { background: #f8f9fa; padding: 15px; border-radius: 8px; }
+              .highlight { background: #e8f5e9; padding: 10px; border-radius: 4px; }
+              @media print { body { margin: 0; } }
+            </style>
+          </head>
+          <body>
+            <div class="header">
+              <h1>2023 Tax Return Summary</h1>
+              <h2>John Doe</h2>
+            </div>
+            <div class="section summary">
+              <h3>Tax Summary</h3>
+              <p><strong>Total Income:</strong> $72,350.00</p>
+              <p><strong>Adjusted Gross Income:</strong> $71,150.00</p>
+              <p><strong>Taxable Income:</strong> $57,300.00</p>
+              <p><strong>Federal Tax:</strong> $9,382.00</p>
+              <p><strong>Tax Already Paid:</strong> $14,400.00</p>
+              <div class="highlight">
+                <p><strong>Your Refund: $5,018.00</strong></p>
+              </div>
+            </div>
+            <div class="section">
+              <h3>Personal Information</h3>
+              <p>Name: John Doe</p>
+              <p>SSN: XXX-XX-6789</p>
+              <p>Filing Status: Single</p>
+              <p>Address: 123 Main St, San Francisco, CA 94105</p>
+            </div>
+          </body>
+        </html>
+      `);
+      printWindow.document.close();
+      printWindow.print();
+    }
+    
+    toast.success("Print preview opened");
+    speak("Print preview has been opened in a new window.");
+  };
+
+  const handleDownloadPDF = () => {
+    speak("Downloading your tax return as a PDF file.");
+    
+    // Create a downloadable file
+    const content = `TAX RETURN SUMMARY 2023
+======================
+
+TAXPAYER INFORMATION
+Name: John Doe
+SSN: XXX-XX-6789
+Filing Status: Single
+Address: 123 Main St, San Francisco, CA 94105
+
+INCOME SUMMARY
+Total Income: $72,350.00
+Wages (W-2): $72,000.00
+Interest (1099-INT): $350.00
+
+TAX CALCULATION
+Adjusted Gross Income: $71,150.00
+Standard Deduction: $13,850.00
+Taxable Income: $57,300.00
+Federal Tax: $9,382.00
+Tax Already Paid: $14,400.00
+
+REFUND: $5,018.00
+
+Generated on: ${new Date().toLocaleDateString()}
+`;
+    
+    const element = window.document.createElement('a');
+    const file = new Blob([content], { type: 'text/plain' });
+    element.href = URL.createObjectURL(file);
+    element.download = 'Tax_Return_2023_Summary.txt';
+    window.document.body.appendChild(element);
+    element.click();
+    window.document.body.removeChild(element);
+    
+    toast.success("Tax return PDF downloaded");
+    speak("Your tax return summary has been downloaded to your device.");
+  };
+
+  const handleSaveForLater = () => {
+    speak("Saving your tax return for later completion.");
+    
+    // Simulate saving
+    setTimeout(() => {
+      toast.success("Tax return saved successfully");
+      speak("Your tax return has been saved. You can continue from where you left off later.");
+    }, 1000);
+  };
+
   return (
     <div className="space-y-6">
       <div className="space-y-2">
@@ -160,13 +272,13 @@ const ReviewStep: React.FC<ReviewStepProps> = ({ onPrevious }) => {
       </div>
 
       <div className="flex flex-wrap gap-3 justify-center pt-2">
-        <Button variant="outline" size="sm">
+        <Button variant="outline" size="sm" onClick={handlePrintPreview}>
           <Printer className="mr-2 h-4 w-4" /> Print Preview
         </Button>
-        <Button variant="outline" size="sm">
+        <Button variant="outline" size="sm" onClick={handleDownloadPDF}>
           <Download className="mr-2 h-4 w-4" /> Download PDF
         </Button>
-        <Button variant="outline" size="sm">
+        <Button variant="outline" size="sm" onClick={handleSaveForLater}>
           <ArrowDown className="mr-2 h-4 w-4" /> Save for Later
         </Button>
       </div>
