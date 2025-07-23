@@ -185,6 +185,7 @@ const TaxAssistant: React.FC = () => {
         <CardFooter className="pt-0">
           <div className="flex w-full items-center space-x-2">
             <Input
+              id="chat-input"
               placeholder="Ask me anything about taxes..."
               value={input}
               onChange={(e) => setInput(e.target.value)}

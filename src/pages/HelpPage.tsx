@@ -121,7 +121,13 @@ const HelpPage: React.FC = () => {
                       <p className="text-sm text-muted-foreground mb-4">
                         A comprehensive guide for first-time tax filers
                       </p>
-                      <Button variant="outline" size="sm">View Guide</Button>
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => window.open('/guides/first-time-filer', '_blank')}
+                      >
+                        View Guide
+                      </Button>
                     </CardContent>
                   </Card>
                   
@@ -133,7 +139,13 @@ const HelpPage: React.FC = () => {
                       <p className="text-sm text-muted-foreground mb-4">
                         Everything you need to know about filing taxes as a freelancer
                       </p>
-                      <Button variant="outline" size="sm">View Guide</Button>
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => window.open('/guides/self-employment', '_blank')}
+                      >
+                        View Guide
+                      </Button>
                     </CardContent>
                   </Card>
                   
@@ -145,7 +157,13 @@ const HelpPage: React.FC = () => {
                       <p className="text-sm text-muted-foreground mb-4">
                         How to report income and expenses from rental properties
                       </p>
-                      <Button variant="outline" size="sm">View Guide</Button>
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => window.open('/guides/rental-income', '_blank')}
+                      >
+                        View Guide
+                      </Button>
                     </CardContent>
                   </Card>
                   
@@ -157,7 +175,13 @@ const HelpPage: React.FC = () => {
                       <p className="text-sm text-muted-foreground mb-4">
                         Tips for finding all eligible tax deductions
                       </p>
-                      <Button variant="outline" size="sm">View Guide</Button>
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => window.open('/guides/deductions', '_blank')}
+                      >
+                        View Guide
+                      </Button>
                     </CardContent>
                   </Card>
                   
@@ -169,7 +193,13 @@ const HelpPage: React.FC = () => {
                       <p className="text-sm text-muted-foreground mb-4">
                         How to report dividends, interest, and capital gains
                       </p>
-                      <Button variant="outline" size="sm">View Guide</Button>
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => window.open('/guides/investment-income', '_blank')}
+                      >
+                        View Guide
+                      </Button>
                     </CardContent>
                   </Card>
                   
@@ -181,7 +211,13 @@ const HelpPage: React.FC = () => {
                       <p className="text-sm text-muted-foreground mb-4">
                         Step-by-step guide to requesting more time to file
                       </p>
-                      <Button variant="outline" size="sm">View Guide</Button>
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => window.open('/guides/filing-extension', '_blank')}
+                      >
+                        View Guide
+                      </Button>
                     </CardContent>
                   </Card>
                 </div>

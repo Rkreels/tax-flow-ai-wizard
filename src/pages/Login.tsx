@@ -16,10 +16,12 @@ const Login: React.FC = () => {
   const { login, isAuthenticated } = useAuth();
   const [isLoggingIn, setIsLoggingIn] = useState<string | null>(null);
 
-  if (isAuthenticated) {
-    navigate("/", { replace: true });
-    return null;
-  }
+  // Use useEffect to handle navigation instead of during render
+  React.useEffect(() => {
+    if (isAuthenticated) {
+      navigate("/", { replace: true });
+    }
+  }, [isAuthenticated, navigate]);
 
   const demoAccounts: DemoAccount[] = [
     {

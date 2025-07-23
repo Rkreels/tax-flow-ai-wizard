@@ -38,27 +38,42 @@ const AssistantPage: React.FC = () => {
                   <CardContent className="text-sm">
                     <ul className="space-y-2">
                       <li>
-                        <button className="text-left text-blue-600 hover:underline">
+                        <button 
+                          className="text-left text-primary hover:underline"
+                          onClick={() => document.getElementById('chat-input')?.focus()}
+                        >
                           When is the tax filing deadline?
                         </button>
                       </li>
                       <li>
-                        <button className="text-left text-blue-600 hover:underline">
+                        <button 
+                          className="text-left text-primary hover:underline"
+                          onClick={() => document.getElementById('chat-input')?.focus()}
+                        >
                           What forms do I need for self-employment income?
                         </button>
                       </li>
                       <li>
-                        <button className="text-left text-blue-600 hover:underline">
+                        <button 
+                          className="text-left text-primary hover:underline"
+                          onClick={() => document.getElementById('chat-input')?.focus()}
+                        >
                           How do I check the status of my refund?
                         </button>
                       </li>
                       <li>
-                        <button className="text-left text-blue-600 hover:underline">
+                        <button 
+                          className="text-left text-primary hover:underline"
+                          onClick={() => document.getElementById('chat-input')?.focus()}
+                        >
                           Can I deduct my home office expenses?
                         </button>
                       </li>
                       <li>
-                        <button className="text-left text-blue-600 hover:underline">
+                        <button 
+                          className="text-left text-primary hover:underline"
+                          onClick={() => document.getElementById('chat-input')?.focus()}
+                        >
                           What is the difference between tax credits and deductions?
                         </button>
                       </li>
@@ -121,27 +136,39 @@ const AssistantPage: React.FC = () => {
                     <ul className="space-y-2">
                       <li className="flex items-center">
                         <Calculator className="h-4 w-4 mr-2 text-gray-400" />
-                        <a href="#" className="text-blue-600 hover:underline">
+                        <button 
+                          className="text-primary hover:underline"
+                          onClick={() => window.open('https://www.irs.gov/help/ita/tax-withholding-estimator', '_blank')}
+                        >
                           Tax Bracket Calculator
-                        </a>
+                        </button>
                       </li>
                       <li className="flex items-center">
                         <Calculator className="h-4 w-4 mr-2 text-gray-400" />
-                        <a href="#" className="text-blue-600 hover:underline">
+                        <button 
+                          className="text-primary hover:underline"
+                          onClick={() => window.open('https://www.irs.gov/forms-pubs/about-form-1040es', '_blank')}
+                        >
                           Estimated Tax Payment Calculator
-                        </a>
+                        </button>
                       </li>
                       <li className="flex items-center">
                         <FileText className="h-4 w-4 mr-2 text-gray-400" />
-                        <a href="#" className="text-blue-600 hover:underline">
+                        <button 
+                          className="text-primary hover:underline"
+                          onClick={() => window.open('https://www.irs.gov/individuals/tax-withholding-estimator', '_blank')}
+                        >
                           W-4 Withholding Calculator
-                        </a>
+                        </button>
                       </li>
                       <li className="flex items-center">
                         <FileText className="h-4 w-4 mr-2 text-gray-400" />
-                        <a href="#" className="text-blue-600 hover:underline">
+                        <button 
+                          className="text-primary hover:underline"
+                          onClick={() => window.open('https://www.irs.gov/businesses/small-businesses-self-employed/self-employment-tax-social-security-and-medicare-taxes', '_blank')}
+                        >
                           Self-Employment Tax Estimator
-                        </a>
+                        </button>
                       </li>
                     </ul>
                   </CardContent>

@@ -2,6 +2,7 @@ import React from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useVoiceAssistant } from "@/contexts/VoiceAssistantContext";
+import { useDynamicData } from "@/hooks/useDynamicData";
 import MainLayout from "@/components/layout/MainLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -12,6 +13,7 @@ import { ArrowRight, FileText, FileCheck, Receipt, Activity, Users, BookOpen, Se
 const UserDashboard: React.FC = () => {
   const { speakElementMessage } = useVoiceAssistant();
   const navigate = useNavigate();
+  const { data, loading } = useDynamicData();
   
   const handleButtonClick = (path: string, elementId: string) => {
     speakElementMessage(elementId);
@@ -31,8 +33,11 @@ const UserDashboard: React.FC = () => {
         <CardContent className="space-y-4">
           <div>
             <p className="mb-2">Let's get started with your tax filing:</p>
-            <Progress value={15} className="h-2" />
-            <p className="mt-1 text-sm text-muted-foreground">Progress: 15% complete</p>
+            <Progress value={data.userStats.completedReturns > 0 ? 75 : 15} className="h-2" />
+            <p className="mt-1 text-sm text-muted-foreground">
+              Progress: {data.userStats.completedReturns > 0 ? '75' : '15'}% complete • 
+              Last activity: {data.userStats.lastActivity}
+            </p>
           </div>
           <Button 
             className="mt-2" 
@@ -110,24 +115,29 @@ const UserDashboard: React.FC = () => {
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            <div className="flex items-center border-b pb-2">
-              <div className="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 mr-3">
-                <FileText className="h-4 w-4" />
-              </div>
-              <div className="flex-1">
-                <p className="text-sm font-medium">Started 2023 Tax Return</p>
-                <p className="text-xs text-muted-foreground">April 10, 2025</p>
-              </div>
-            </div>
-            <div className="flex items-center border-b pb-2">
-              <div className="h-8 w-8 rounded-full bg-green-100 flex items-center justify-center text-green-700 mr-3">
-                <FileCheck className="h-4 w-4" />
-              </div>
-              <div className="flex-1">
-                <p className="text-sm font-medium">Uploaded W-2 from Acme Inc.</p>
-                <p className="text-xs text-muted-foreground">April 9, 2025</p>
-              </div>
-            </div>
+            {loading ? (
+              <div className="text-center text-muted-foreground">Loading recent activity...</div>
+            ) : (
+              data.recentActivity.slice(0, 3).map((activity) => (
+                <div key={activity.id} className="flex items-center border-b pb-2">
+                  <div className={`h-8 w-8 rounded-full flex items-center justify-center mr-3 ${
+                    activity.type === 'return' ? 'bg-blue-100 text-blue-700' :
+                    activity.type === 'document' ? 'bg-green-100 text-green-700' :
+                    'bg-purple-100 text-purple-700'
+                  }`}>
+                    {activity.type === 'return' ? <FileText className="h-4 w-4" /> :
+                     activity.type === 'document' ? <FileCheck className="h-4 w-4" /> :
+                     <Receipt className="h-4 w-4" />}
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm font-medium">{activity.description}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {activity.timestamp.toLocaleDateString()}
+                    </p>
+                  </div>
+                </div>
+              ))
+            )}
           </div>
         </CardContent>
       </Card>
@@ -139,6 +149,7 @@ const UserDashboard: React.FC = () => {
 const AdminDashboard: React.FC = () => {
   const { speakElementMessage } = useVoiceAssistant();
   const navigate = useNavigate();
+  const { data, loading } = useDynamicData();
   
   const handleButtonClick = (path: string, elementId: string) => {
     speakElementMessage(elementId);
@@ -156,15 +167,21 @@ const AdminDashboard: React.FC = () => {
           <div className="grid gap-4 md:grid-cols-3">
             <div className="flex flex-col space-y-1.5 rounded-lg border p-4">
               <div className="text-sm font-medium text-muted-foreground">Total Users</div>
-              <div className="text-3xl font-bold">2,417</div>
+              <div className="text-3xl font-bold">
+                {loading ? '...' : data.systemStats.totalUsers.toLocaleString()}
+              </div>
             </div>
             <div className="flex flex-col space-y-1.5 rounded-lg border bg-green-50 dark:bg-green-900/20 p-4">
               <div className="text-sm font-medium text-muted-foreground">Active Returns</div>
-              <div className="text-3xl font-bold">1,892</div>
+              <div className="text-3xl font-bold">
+                {loading ? '...' : data.systemStats.activeReturns.toLocaleString()}
+              </div>
             </div>
             <div className="flex flex-col space-y-1.5 rounded-lg border bg-amber-50 dark:bg-amber-900/20 p-4">
               <div className="text-sm font-medium text-muted-foreground">Support Tickets</div>
-              <div className="text-3xl font-bold">14</div>
+              <div className="text-3xl font-bold">
+                {loading ? '...' : data.systemStats.supportTickets}
+              </div>
             </div>
           </div>
         </CardContent>
@@ -273,6 +290,7 @@ const AdminDashboard: React.FC = () => {
 const SupportDashboard: React.FC = () => {
   const { speakElementMessage } = useVoiceAssistant();
   const navigate = useNavigate();
+  const { data, loading } = useDynamicData();
   
   const handleButtonClick = (path: string, elementId: string) => {
     speakElementMessage(elementId);
@@ -290,15 +308,21 @@ const SupportDashboard: React.FC = () => {
           <div className="grid gap-4 md:grid-cols-3">
             <div className="flex flex-col space-y-1.5 rounded-lg border p-4">
               <div className="text-sm font-medium text-muted-foreground">Total Tickets</div>
-              <div className="text-3xl font-bold">14</div>
+              <div className="text-3xl font-bold">
+                {loading ? '...' : data.systemStats.supportTickets}
+              </div>
             </div>
             <div className="flex flex-col space-y-1.5 rounded-lg border bg-red-50 dark:bg-red-900/20 p-4">
               <div className="text-sm font-medium text-muted-foreground">Urgent</div>
-              <div className="text-3xl font-bold">3</div>
+              <div className="text-3xl font-bold">
+                {loading ? '...' : Math.floor(data.systemStats.supportTickets * 0.2)}
+              </div>
             </div>
             <div className="flex flex-col space-y-1.5 rounded-lg border bg-green-50 dark:bg-green-900/20 p-4">
               <div className="text-sm font-medium text-muted-foreground">Resolved Today</div>
-              <div className="text-3xl font-bold">7</div>
+              <div className="text-3xl font-bold">
+                {loading ? '...' : Math.floor(data.systemStats.supportTickets * 0.5)}
+              </div>
             </div>
           </div>
         </CardContent>
