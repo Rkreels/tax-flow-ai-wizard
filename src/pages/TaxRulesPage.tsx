@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import MainLayout from "@/components/layout/MainLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { AlertCircle, Edit, FileText, Plus, Search, Trash2 } from "lucide-react";
 import { toast } from "sonner";
+import { useVoiceAssistant } from "@/contexts/VoiceAssistantContext";
 
 interface TaxRule {
   id: string;
@@ -17,8 +18,13 @@ interface TaxRule {
 }
 
 const TaxRulesPage: React.FC = () => {
+  const { speak } = useVoiceAssistant();
   const [searchTerm, setSearchTerm] = useState("");
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+
+  useEffect(() => {
+    speak("Tax Rules Configuration page loaded. Here you can manage tax deductions, credits, and other regulations.");
+  }, [speak]);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedRule, setSelectedRule] = useState<TaxRule | null>(null);
@@ -65,6 +71,7 @@ const TaxRulesPage: React.FC = () => {
     setTaxRules([...taxRules, rule]);
     setIsAddDialogOpen(false);
     setNewRule({ name: "", description: "", category: "deduction" });
+    speak(`Tax rule ${newRule.name} has been added successfully`);
     toast.success("Tax rule added successfully");
   };
 
@@ -103,7 +110,10 @@ const TaxRulesPage: React.FC = () => {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <h1 className="text-3xl font-bold tracking-tight">Tax Rules</h1>
-          <Button onClick={() => setIsAddDialogOpen(true)}>
+          <Button onClick={() => {
+            speak("Opening new tax rule dialog. Enter the rule name, description, and category.");
+            setIsAddDialogOpen(true);
+          }}>
             <Plus className="mr-2 h-4 w-4" /> Add New Rule
           </Button>
         </div>

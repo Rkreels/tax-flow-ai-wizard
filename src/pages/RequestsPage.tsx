@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import MainLayout from "@/components/layout/MainLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Search, CheckCircle, XCircle, MessageSquare } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
+import { useVoiceAssistant } from "@/contexts/VoiceAssistantContext";
 
 interface UserRequest {
   id: string;
@@ -24,8 +25,13 @@ interface UserRequest {
 }
 
 const RequestsPage: React.FC = () => {
+  const { speak } = useVoiceAssistant();
   const [searchTerm, setSearchTerm] = useState("");
   const [isReplyDialogOpen, setIsReplyDialogOpen] = useState(false);
+
+  useEffect(() => {
+    speak("User Requests dashboard loaded. You can view, filter, and respond to support tickets from this interface.");
+  }, [speak]);
   const [selectedRequest, setSelectedRequest] = useState<UserRequest | null>(null);
   const [replyText, setReplyText] = useState("");
   
@@ -113,6 +119,7 @@ const RequestsPage: React.FC = () => {
     setUserRequests(updatedRequests);
     setIsReplyDialogOpen(false);
     setReplyText("");
+    speak("Reply sent successfully. The user has been notified of your response.");
     toast.success("Reply sent successfully");
   };
 

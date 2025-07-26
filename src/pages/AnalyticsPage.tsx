@@ -1,11 +1,18 @@
 
-import React from "react";
+import React, { useEffect } from "react";
 import MainLayout from "@/components/layout/MainLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BarChart as RechartsBarChart, Bar, LineChart as RechartsLineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import { BarChart2, LineChart as LineChartIcon, TrendingUp, Users } from "lucide-react";
+import { useVoiceAssistant } from "@/contexts/VoiceAssistantContext";
 
 const AnalyticsPage: React.FC = () => {
+  const { speak, speakElementMessage } = useVoiceAssistant();
+
+  useEffect(() => {
+    speak("Analytics Dashboard loaded. You can review tax return statistics, user activity metrics, and system performance data.");
+  }, [speak]);
+
   // Sample data for charts
   const monthlyData = [
     { name: "Jan", value: 400 },
@@ -32,7 +39,10 @@ const AnalyticsPage: React.FC = () => {
         <h1 className="text-3xl font-bold tracking-tight">Analytics Dashboard</h1>
         
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          <Card>
+          <Card 
+            className="cursor-pointer hover:shadow-md transition-shadow"
+            onClick={() => speak("Total Returns: 2,345 tax returns filed, showing a 20.1% increase from last month")}
+          >
             <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
               <CardTitle className="text-sm font-medium">Total Returns</CardTitle>
               <BarChart2 className="h-4 w-4 text-muted-foreground" />
@@ -42,7 +52,10 @@ const AnalyticsPage: React.FC = () => {
               <p className="text-xs text-muted-foreground">+20.1% from last month</p>
             </CardContent>
           </Card>
-          <Card>
+          <Card 
+            className="cursor-pointer hover:shadow-md transition-shadow"
+            onClick={() => speak("Active Users: 1,273 users are currently active, showing a 10.5% increase from last month")}
+          >
             <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
               <CardTitle className="text-sm font-medium">Active Users</CardTitle>
               <Users className="h-4 w-4 text-muted-foreground" />
@@ -52,7 +65,10 @@ const AnalyticsPage: React.FC = () => {
               <p className="text-xs text-muted-foreground">+10.5% from last month</p>
             </CardContent>
           </Card>
-          <Card>
+          <Card 
+            className="cursor-pointer hover:shadow-md transition-shadow"
+            onClick={() => speak("Completion Rate: 78.3% of tax returns are completed successfully, up 2.1% from last month")}
+          >
             <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
               <CardTitle className="text-sm font-medium">Completion Rate</CardTitle>
               <LineChartIcon className="h-4 w-4 text-muted-foreground" />
@@ -62,7 +78,10 @@ const AnalyticsPage: React.FC = () => {
               <p className="text-xs text-muted-foreground">+2.1% from last month</p>
             </CardContent>
           </Card>
-          <Card>
+          <Card 
+            className="cursor-pointer hover:shadow-md transition-shadow"
+            onClick={() => speak("Average Time: Users spend an average of 24 minutes and 13 seconds completing their tax returns, down 1.5% from last month")}
+          >
             <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
               <CardTitle className="text-sm font-medium">Average Time</CardTitle>
               <TrendingUp className="h-4 w-4 text-muted-foreground" />

@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -7,6 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
 import { Plus, Upload, Check, AlertTriangle, FileText } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { useVoiceAssistant } from "@/contexts/VoiceAssistantContext";
 
 interface IncomeStepProps {
   onNext: () => void;
@@ -14,10 +15,15 @@ interface IncomeStepProps {
 }
 
 const IncomeStep: React.FC<IncomeStepProps> = ({ onNext, onPrevious }) => {
+  const { speak } = useVoiceAssistant();
   const [documents, setDocuments] = useState([
     { id: 1, name: "W-2 - Acme Inc.", status: "processed" },
     { id: 2, name: "1099-INT - First Bank", status: "processed" },
   ]);
+
+  useEffect(() => {
+    speak("Income Information step loaded. Upload your tax documents or manually enter income from wages, interest, and other sources.");
+  }, [speak]);
 
   return (
     <div className="space-y-6">
@@ -232,10 +238,16 @@ const IncomeStep: React.FC<IncomeStepProps> = ({ onNext, onPrevious }) => {
       </Tabs>
 
       <div className="pt-4 flex justify-between">
-        <Button variant="outline" onClick={onPrevious}>
+        <Button variant="outline" onClick={() => {
+          speak("Returning to personal information step");
+          onPrevious();
+        }}>
           Back to Personal Info
         </Button>
-        <Button onClick={onNext}>
+        <Button onClick={() => {
+          speak("Proceeding to deductions step. You can choose between standard or itemized deductions.");
+          onNext();
+        }}>
           Continue to Deductions
         </Button>
       </div>

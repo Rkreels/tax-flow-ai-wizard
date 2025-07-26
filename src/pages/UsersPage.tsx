@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import MainLayout from "@/components/layout/MainLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Edit, Lock, Plus, Search, Trash2, UserCog } from "lucide-react";
 import { toast } from "sonner";
 import { UserRole } from "@/contexts/AuthContext";
+import { useVoiceAssistant } from "@/contexts/VoiceAssistantContext";
 
 interface User {
   id: string;
@@ -21,11 +22,16 @@ interface User {
 }
 
 const UsersPage: React.FC = () => {
+  const { speak } = useVoiceAssistant();
   const [searchTerm, setSearchTerm] = useState("");
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
+
+  useEffect(() => {
+    speak("User Management page loaded. You can view, add, edit, and delete user accounts from this interface.");
+  }, [speak]);
   
   const [newUser, setNewUser] = useState({
     name: "",
@@ -91,6 +97,7 @@ const UsersPage: React.FC = () => {
     setUsers([...users, user]);
     setIsAddDialogOpen(false);
     setNewUser({ name: "", email: "", role: "user", password: "" });
+    speak(`User ${newUser.name} has been added successfully with ${newUser.role} privileges`);
     toast.success("User added successfully");
   };
 
@@ -106,6 +113,7 @@ const UsersPage: React.FC = () => {
 
     setUsers(updatedUsers);
     setIsEditDialogOpen(false);
+    speak(`User ${selectedUser.name} has been updated successfully`);
     toast.success("User updated successfully");
   };
 
@@ -115,6 +123,7 @@ const UsersPage: React.FC = () => {
     const updatedUsers = users.filter(user => user.id !== selectedUser.id);
     setUsers(updatedUsers);
     setIsDeleteDialogOpen(false);
+    speak(`User ${selectedUser.name} has been permanently deleted from the system`);
     toast.success("User deleted successfully");
   };
 
@@ -148,7 +157,10 @@ const UsersPage: React.FC = () => {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <h1 className="text-3xl font-bold tracking-tight">User Management</h1>
-          <Button onClick={() => setIsAddDialogOpen(true)}>
+          <Button onClick={() => {
+            speak("Opening add user dialog. Fill in the required information to create a new user account.");
+            setIsAddDialogOpen(true);
+          }}>
             <Plus className="mr-2 h-4 w-4" /> Add User
           </Button>
         </div>

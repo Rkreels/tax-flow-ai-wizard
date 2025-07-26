@@ -40,7 +40,26 @@ class VoiceAssistant {
       uploadDocument: "Uploading document. Please select a file to upload to your tax documents.",
       downloadPdf: "Downloading PDF. Your tax document will be saved to your device.",
       saveChanges: "Saving your changes. Your updated information has been recorded.",
-      cancelAction: "Cancelling action. No changes have been made to your information."
+      cancelAction: "Cancelling action. No changes have been made to your information.",
+      
+      // Form interactions
+      editProfile: "Opening profile editor. You can update your personal information and preferences.",
+      resetPassword: "Password reset initiated. Check your email for reset instructions.",
+      updatePermissions: "Updating user permissions. Changes will take effect immediately.",
+      addNewUser: "Creating new user account. Fill in the required fields to proceed.",
+      deleteUser: "User deletion confirmed. This action cannot be undone.",
+      
+      // Tax filing actions
+      saveReturn: "Tax return saved successfully. You can continue editing later.",
+      submitReturn: "Tax return submitted to IRS. You will receive confirmation within 24 hours.",
+      printReturn: "Preparing tax return for printing. A new window will open with your document.",
+      downloadReturn: "Downloading tax return PDF. The file will be saved to your device.",
+      
+      // Button interactions
+      nextStep: "Proceeding to the next step in the tax filing process.",
+      previousStep: "Going back to the previous step to review your information.",
+      closeModal: "Closing dialog window. No changes have been saved.",
+      confirmAction: "Action confirmed. Processing your request now."
     };
     
     // Page descriptions for when pages are loaded

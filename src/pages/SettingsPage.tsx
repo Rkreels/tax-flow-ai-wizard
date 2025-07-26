@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import MainLayout from "@/components/layout/MainLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -10,22 +10,31 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { Bell, Shield, User } from "lucide-react";
+import { useVoiceAssistant } from "@/contexts/VoiceAssistantContext";
 
 const SettingsPage: React.FC = () => {
+  const { speak } = useVoiceAssistant();
   const [emailNotifications, setEmailNotifications] = useState(true);
   const [smsNotifications, setSmsNotifications] = useState(false);
   const [twoFactorAuth, setTwoFactorAuth] = useState(false);
   const [themes, setTheme] = useState("light");
 
+  useEffect(() => {
+    speak("Settings page loaded. Configure your general settings, security preferences, and notification options using the tabs above.");
+  }, [speak]);
+
   const handleSaveGeneralSettings = () => {
+    speak("General settings have been saved successfully");
     toast.success("General settings saved successfully");
   };
 
   const handleSaveSecuritySettings = () => {
+    speak("Security settings have been updated successfully");
     toast.success("Security settings saved successfully");
   };
 
   const handleSaveNotificationSettings = () => {
+    speak("Notification preferences have been saved");
     toast.success("Notification preferences saved");
   };
 
@@ -38,9 +47,24 @@ const SettingsPage: React.FC = () => {
 
         <Tabs defaultValue="general" className="w-full">
           <TabsList className="grid w-full md:w-auto md:inline-grid grid-cols-3 md:grid-cols-3">
-            <TabsTrigger value="general">General</TabsTrigger>
-            <TabsTrigger value="security">Security</TabsTrigger>
-            <TabsTrigger value="notifications">Notifications</TabsTrigger>
+            <TabsTrigger 
+              value="general" 
+              onClick={() => speak("General settings tab selected. Configure your basic account preferences.")}
+            >
+              General
+            </TabsTrigger>
+            <TabsTrigger 
+              value="security" 
+              onClick={() => speak("Security settings tab selected. Manage passwords and authentication options.")}
+            >
+              Security
+            </TabsTrigger>
+            <TabsTrigger 
+              value="notifications" 
+              onClick={() => speak("Notifications tab selected. Customize how you receive alerts and updates.")}
+            >
+              Notifications
+            </TabsTrigger>
           </TabsList>
           
           <TabsContent value="general" className="space-y-4 pt-4">

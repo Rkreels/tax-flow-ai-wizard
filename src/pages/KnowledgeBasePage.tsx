@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import MainLayout from "@/components/layout/MainLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -8,6 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Book, FileText, Search, Star, Bookmark, Clock, Plus } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { useVoiceAssistant } from "@/contexts/VoiceAssistantContext";
 
 interface ArticleType {
   id: string;
@@ -21,8 +22,13 @@ interface ArticleType {
 }
 
 const KnowledgeBasePage: React.FC = () => {
+  const { speak } = useVoiceAssistant();
   const [searchTerm, setSearchTerm] = useState("");
   const { user } = useAuth();
+
+  useEffect(() => {
+    speak("Knowledge Base loaded. Browse comprehensive articles about tax regulations, filing procedures, and best practices using the search or category tabs.");
+  }, [speak]);
   
   const isAdmin = user?.role === "admin";
   const isSupport = user?.role === "support";
@@ -163,7 +169,7 @@ const KnowledgeBasePage: React.FC = () => {
                 <h2 className="text-2xl font-semibold">{getCategoryTitle(category)}</h2>
                 <div className="grid gap-4 md:grid-cols-2">
                   {articles.map(article => (
-                    <ArticleCard key={article.id} article={article} />
+                    <ArticleCard key={article.id} article={article} speak={speak} />
                   ))}
                 </div>
               </div>
@@ -182,7 +188,7 @@ const KnowledgeBasePage: React.FC = () => {
             <TabsContent key={category} value={category} className="space-y-4 pt-4">
               <div className="grid gap-4 md:grid-cols-2">
                 {(articlesByCategory[category] || []).map(article => (
-                  <ArticleCard key={article.id} article={article} />
+                  <ArticleCard key={article.id} article={article} speak={speak} />
                 ))}
               </div>
 
@@ -203,9 +209,10 @@ const KnowledgeBasePage: React.FC = () => {
 
 interface ArticleCardProps {
   article: ArticleType;
+  speak: (text: string) => void;
 }
 
-const ArticleCard: React.FC<ArticleCardProps> = ({ article }) => {
+const ArticleCard: React.FC<ArticleCardProps> = ({ article, speak }) => {
   return (
     <Card>
       <CardHeader className="pb-3">
@@ -223,7 +230,12 @@ const ArticleCard: React.FC<ArticleCardProps> = ({ article }) => {
             <Clock className="mr-1 h-4 w-4" />
             <span>Updated {article.updatedAt}</span>
           </div>
-          <Button size="sm">Read Article</Button>
+          <Button 
+            size="sm" 
+            onClick={() => speak(`Opening article: ${article.title}. ${article.description}`)}
+          >
+            Read Article
+          </Button>
         </div>
       </CardContent>
     </Card>

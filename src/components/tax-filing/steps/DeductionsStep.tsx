@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -9,6 +9,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { AlertCircle, Check, LightbulbIcon } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
+import { useVoiceAssistant } from "@/contexts/VoiceAssistantContext";
 
 interface DeductionsStepProps {
   onNext: () => void;
@@ -16,7 +17,12 @@ interface DeductionsStepProps {
 }
 
 const DeductionsStep: React.FC<DeductionsStepProps> = ({ onNext, onPrevious }) => {
+  const { speak } = useVoiceAssistant();
   const [deductionMethod, setDeductionMethod] = useState<"standard" | "itemized">("standard");
+
+  useEffect(() => {
+    speak("Deductions and Credits step loaded. Choose between standard deduction or itemize your deductions for potentially greater tax savings.");
+  }, [speak]);
   
   return (
     <div className="space-y-6">
@@ -255,10 +261,16 @@ const DeductionsStep: React.FC<DeductionsStepProps> = ({ onNext, onPrevious }) =
       </div>
 
       <div className="pt-4 flex justify-between">
-        <Button variant="outline" onClick={onPrevious}>
+        <Button variant="outline" onClick={() => {
+          speak("Returning to the income step");
+          onPrevious();
+        }}>
           Back to Income
         </Button>
-        <Button onClick={onNext}>
+        <Button onClick={() => {
+          speak("Proceeding to review step. You can review all your tax information before submitting.");
+          onNext();
+        }}>
           Continue to Review
         </Button>
       </div>
