@@ -11,9 +11,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { toast } from "sonner";
 import { Bell, Shield, User } from "lucide-react";
 import { useVoiceAssistant } from "@/contexts/VoiceAssistantContext";
+import { useAuth } from "@/contexts/AuthContext";
 
 const SettingsPage: React.FC = () => {
   const { speak } = useVoiceAssistant();
+  const { user } = useAuth();
   const [emailNotifications, setEmailNotifications] = useState(true);
   const [smsNotifications, setSmsNotifications] = useState(false);
   const [twoFactorAuth, setTwoFactorAuth] = useState(false);
@@ -24,11 +26,21 @@ const SettingsPage: React.FC = () => {
   }, [speak]);
 
   const handleSaveGeneralSettings = () => {
+    if (user?.role !== 'admin') {
+      speak("Access denied. Only administrators can modify general settings.");
+      toast.error("Access denied. Admin privileges required.");
+      return;
+    }
     speak("General settings have been saved successfully");
     toast.success("General settings saved successfully");
   };
 
   const handleSaveSecuritySettings = () => {
+    if (user?.role !== 'admin') {
+      speak("Access denied. Only administrators can modify security settings.");
+      toast.error("Access denied. Admin privileges required.");
+      return;
+    }
     speak("Security settings have been updated successfully");
     toast.success("Security settings saved successfully");
   };

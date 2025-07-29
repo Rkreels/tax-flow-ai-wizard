@@ -96,6 +96,12 @@ const ProfilePage: React.FC = () => {
     input.click();
   };
 
+  const handleViewDocument = (docName: string, url: string) => {
+    speak(`Opening ${docName} for viewing.`);
+    // Open document in new tab/window
+    window.open(url, '_blank');
+  };
+
   const handleDeleteDocument = (docName: string) => {
     speak(`Deleting ${docName}.`);
     toast.success(`${docName} deleted successfully`);
@@ -372,7 +378,7 @@ const ProfilePage: React.FC = () => {
                       <Button 
                         size="sm" 
                         variant="outline"
-                        onClick={() => speak("Opening W-2 form for viewing.")}
+                        onClick={() => handleViewDocument("W-2 Form (2023)", "/documents/w2-2023.pdf")}
                       >
                         View
                       </Button>
@@ -397,7 +403,7 @@ const ProfilePage: React.FC = () => {
                       <Button 
                         size="sm" 
                         variant="outline"
-                        onClick={() => speak("Opening 1099-INT form for viewing.")}
+                        onClick={() => handleViewDocument("1099-INT (2023)", "/documents/1099-int-2023.pdf")}
                       >
                         View
                       </Button>

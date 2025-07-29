@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useVoiceAssistant } from "@/contexts/VoiceAssistantContext";
@@ -8,6 +8,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { ArrowRight, FileText, FileCheck, Receipt, Activity, Users, BookOpen, Settings } from "lucide-react";
+import { toast } from "sonner";
+import SupportTicketModal from "@/components/support/SupportTicketModal";
 
 // User-specific dashboard components
 const UserDashboard: React.FC = () => {
@@ -288,13 +290,21 @@ const AdminDashboard: React.FC = () => {
 
 // Support agent dashboard
 const SupportDashboard: React.FC = () => {
-  const { speakElementMessage } = useVoiceAssistant();
+  const { speakElementMessage, speak } = useVoiceAssistant();
   const navigate = useNavigate();
   const { data, loading } = useDynamicData();
+  const [selectedTicket, setSelectedTicket] = useState<any>(null);
+  const [isTicketModalOpen, setIsTicketModalOpen] = useState(false);
   
   const handleButtonClick = (path: string, elementId: string) => {
     speakElementMessage(elementId);
     navigate(path);
+  };
+
+  const handleViewTicket = (ticketData: any) => {
+    setSelectedTicket(ticketData);
+    setIsTicketModalOpen(true);
+    speak(`Opening support ticket: ${ticketData.title}`);
   };
   
   return (
@@ -342,7 +352,22 @@ const SupportDashboard: React.FC = () => {
                 <p className="text-sm font-medium">Issue with W-2 Upload</p>
                 <p className="text-xs text-muted-foreground">Sarah Johnson • 32 minutes ago</p>
               </div>
-              <Button size="sm" variant="outline">View</Button>
+              <Button 
+                size="sm" 
+                variant="outline"
+                onClick={() => handleViewTicket({
+                  id: "TKT-001",
+                  title: "Issue with W-2 Upload",
+                  description: "User is experiencing difficulties uploading their W-2 form. The file appears to upload but then shows an error message.",
+                  priority: "urgent",
+                  status: "open",
+                  clientName: "Sarah Johnson",
+                  createdAt: "2025-04-15 14:32",
+                  category: "Document Upload"
+                })}
+              >
+                View
+              </Button>
             </div>
             <div className="flex items-center border-b pb-2">
               <div className="h-8 w-8 rounded-full bg-amber-100 flex items-center justify-center text-amber-700 mr-3">
@@ -352,7 +377,22 @@ const SupportDashboard: React.FC = () => {
                 <p className="text-sm font-medium">Tax Credit Eligibility Question</p>
                 <p className="text-xs text-muted-foreground">Michael Brown • 1 hour ago</p>
               </div>
-              <Button size="sm" variant="outline">View</Button>
+              <Button 
+                size="sm" 
+                variant="outline"
+                onClick={() => handleViewTicket({
+                  id: "TKT-002",
+                  title: "Tax Credit Eligibility Question",
+                  description: "Client wants to know if they qualify for the Child Tax Credit and how to claim it properly on their return.",
+                  priority: "medium",
+                  status: "in_progress",
+                  clientName: "Michael Brown",
+                  createdAt: "2025-04-15 13:15",
+                  category: "Tax Advice"
+                })}
+              >
+                View
+              </Button>
             </div>
             <div className="flex items-center border-b pb-2">
               <div className="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 mr-3">
@@ -362,11 +402,36 @@ const SupportDashboard: React.FC = () => {
                 <p className="text-sm font-medium">Password Reset Assistance</p>
                 <p className="text-xs text-muted-foreground">James Wilson • 2 hours ago</p>
               </div>
-              <Button size="sm" variant="outline">View</Button>
+              <Button 
+                size="sm" 
+                variant="outline"
+                onClick={() => handleViewTicket({
+                  id: "TKT-003",
+                  title: "Password Reset Assistance",
+                  description: "User forgot their password and the reset email is not being received. They have checked spam folder.",
+                  priority: "low",
+                  status: "open",
+                  clientName: "James Wilson",
+                  createdAt: "2025-04-15 11:45",
+                  category: "Account Access"
+                })}
+              >
+                View
+              </Button>
             </div>
           </div>
         </CardContent>
       </Card>
+
+      <SupportTicketModal
+        isOpen={isTicketModalOpen}
+        onClose={() => setIsTicketModalOpen(false)}
+        ticket={selectedTicket}
+        onSave={(ticket) => {
+          speak(`Support ticket ${ticket.id} has been updated.`);
+          toast.success("Ticket updated successfully");
+        }}
+      />
     </div>
   );
 };

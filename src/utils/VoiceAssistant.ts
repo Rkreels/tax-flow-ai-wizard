@@ -7,6 +7,7 @@ class VoiceAssistant {
   private voiceMessages: Record<string, string>;
   private pageDescriptions: Record<string, string>;
   private currentlySpeaking: boolean = false;
+  private currentUser: any = null;
 
   constructor() {
     this.synth = window.speechSynthesis;
@@ -123,13 +124,36 @@ class VoiceAssistant {
     }
   }
 
+  public setUser(user: any): void {
+    this.currentUser = user;
+  }
+
+  public getPersonalizedMessage(baseMessage: string): string {
+    if (!this.currentUser) return baseMessage;
+    
+    const userName = this.currentUser.name ? this.currentUser.name.split(' ')[0] : '';
+    const role = this.currentUser.role;
+    
+    // Add user-specific context based on role
+    if (role === 'admin') {
+      return `${userName}, as an administrator, ${baseMessage.toLowerCase()}`;
+    } else if (role === 'accountant') {
+      return `${userName}, as a tax professional, ${baseMessage.toLowerCase()}`;
+    } else if (role === 'support') {
+      return `${userName}, as a support agent, ${baseMessage.toLowerCase()}`;
+    } else {
+      return userName ? `${userName}, ${baseMessage.toLowerCase()}` : baseMessage;
+    }
+  }
+
   public toggle(): boolean {
     this.isMuted = !this.isMuted;
     if (this.isMuted && this.synth.speaking) {
       this.synth.cancel();
       this.currentlySpeaking = false;
     } else if (!this.isMuted) {
-      this.speak("Voice assistant activated. I can guide you through using this tax application. Click on elements or navigate to pages for information.");
+      const message = this.getPersonalizedMessage("Voice assistant activated. I can guide you through using this tax application. Click on elements or navigate to pages for information.");
+      this.speak(message);
     }
     return this.isMuted;
   }
@@ -152,7 +176,8 @@ class VoiceAssistant {
 
   public unmute(): void {
     this.isMuted = false;
-    this.speak("Voice assistant activated. I can guide you through using this tax application.");
+    const message = this.getPersonalizedMessage("Voice assistant activated. I can guide you through using this tax application.");
+    this.speak(message);
   }
 }
 

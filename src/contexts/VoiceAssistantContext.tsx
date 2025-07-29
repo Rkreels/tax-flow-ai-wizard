@@ -2,6 +2,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import voiceAssistant from '@/utils/VoiceAssistant';
+import { useAuth } from '@/contexts/AuthContext';
 import { Volume2, VolumeX } from "lucide-react";
 
 interface VoiceAssistantContextType {
@@ -18,7 +19,15 @@ export const VoiceAssistantProvider: React.FC<{ children: React.ReactNode }> = (
   const [isMuted, setIsMuted] = useState<boolean>(voiceAssistant.getMutedState());
   const [isSpeaking, setIsSpeaking] = useState<boolean>(false);
   const location = useLocation();
+  const { user } = useAuth();
   
+  // Set user context for personalized voice messages
+  useEffect(() => {
+    if (user) {
+      voiceAssistant.setUser(user);
+    }
+  }, [user]);
+
   // Update speaking state
   useEffect(() => {
     const checkSpeakingStatus = () => {
