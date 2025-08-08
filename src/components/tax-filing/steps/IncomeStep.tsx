@@ -1,5 +1,7 @@
 
 import React, { useState, useEffect } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -7,23 +9,76 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
 import { Plus, Upload, Check, AlertTriangle, FileText } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useVoiceAssistant } from "@/contexts/VoiceAssistantContext";
+import { incomeSchema, IncomeForm } from "@/utils/formValidation";
 
 interface IncomeStepProps {
   onNext: () => void;
   onPrevious: () => void;
+  onSave: (data: IncomeForm) => void;
+  initialData?: IncomeForm | null;
 }
 
-const IncomeStep: React.FC<IncomeStepProps> = ({ onNext, onPrevious }) => {
+const IncomeStep: React.FC<IncomeStepProps> = ({ onNext, onPrevious, onSave, initialData }) => {
   const { speak } = useVoiceAssistant();
   const [documents, setDocuments] = useState([
     { id: 1, name: "W-2 - Acme Inc.", status: "processed" },
     { id: 2, name: "1099-INT - First Bank", status: "processed" },
   ]);
 
+  const form = useForm<IncomeForm>({
+    resolver: zodResolver(incomeSchema),
+    defaultValues: initialData || {
+      wages: 0,
+      federalWithheld: 0,
+      ssWages: 0,
+      ssWithheld: 0,
+      interestIncome: 0,
+      taxExemptInterest: 0
+    }
+  });
+
   useEffect(() => {
     speak("Income Information step loaded. Upload your tax documents or manually enter income from wages, interest, and other sources.");
   }, [speak]);
+
+  const onSubmit = async (data: IncomeForm) => {
+    try {
+      await onSave(data);
+      speak("Income information saved successfully. Proceeding to deductions step.");
+      onNext();
+    } catch (error) {
+      speak("There was an error saving your income information. Please try again.");
+    }
+  };
+
+  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (files && files.length > 0) {
+      Array.from(files).forEach((file, index) => {
+        const newDoc = {
+          id: Date.now() + index,
+          name: file.name,
+          status: "processing" as const
+        };
+        setDocuments(prev => [...prev, newDoc]);
+        
+        // Simulate processing
+        setTimeout(() => {
+          setDocuments(prev => 
+            prev.map(doc => 
+              doc.id === newDoc.id 
+                ? { ...doc, status: "processed" as const }
+                : doc
+            )
+          );
+        }, 2000);
+      });
+      
+      speak(`${files.length} document${files.length > 1 ? 's' : ''} uploaded and processing.`);
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -48,15 +103,25 @@ const IncomeStep: React.FC<IncomeStepProps> = ({ onNext, onPrevious }) => {
             <p className="mb-4 text-sm text-muted-foreground text-center">
               Drag and drop your W-2, 1099, and other income documents here, or click to browse files
             </p>
-            <Button>
-              <Upload className="mr-2 h-4 w-4" /> Select Files
+            <input
+              type="file"
+              multiple
+              accept=".pdf,.jpg,.jpeg,.png"
+              onChange={handleFileUpload}
+              className="hidden"
+              id="file-upload"
+            />
+            <Button asChild>
+              <label htmlFor="file-upload" className="cursor-pointer">
+                <Upload className="mr-2 h-4 w-4" /> Select Files
+              </label>
             </Button>
           </div>
 
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <h3 className="font-medium">Uploaded Documents</h3>
-              <Badge variant="outline" className="font-normal">2 documents</Badge>
+              <Badge variant="outline" className="font-normal">{documents.length} documents</Badge>
             </div>
             
             <div className="space-y-2">
@@ -84,7 +149,7 @@ const IncomeStep: React.FC<IncomeStepProps> = ({ onNext, onPrevious }) => {
                         </div>
                       </div>
                     </div>
-                    <Button variant="ghost" size="sm">
+                    <Button variant="ghost" size="sm" onClick={() => speak(`Viewing ${doc.name}`)}>
                       View
                     </Button>
                   </CardContent>
@@ -95,145 +160,166 @@ const IncomeStep: React.FC<IncomeStepProps> = ({ onNext, onPrevious }) => {
         </TabsContent>
         
         <TabsContent value="wages" className="space-y-6 pt-4">
-          <div className="space-y-4">
-            <div className="rounded-md bg-blue-50 p-4 dark:bg-blue-900/20">
-              <div className="flex">
-                <div className="flex-shrink-0">
-                  <Check className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-                </div>
-                <div className="ml-3">
-                  <h3 className="text-sm font-medium text-blue-800 dark:text-blue-300">
-                    We found the following income from your documents
-                  </h3>
-                  <div className="mt-2 text-sm text-blue-700 dark:text-blue-300">
-                    <p>W-2 from Acme Inc. with wages of $72,000.00</p>
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+              <div className="rounded-md bg-blue-50 p-4 dark:bg-blue-900/20">
+                <div className="flex">
+                  <div className="flex-shrink-0">
+                    <Check className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                  </div>
+                  <div className="ml-3">
+                    <h3 className="text-sm font-medium text-blue-800 dark:text-blue-300">
+                      Enter your wage information from your W-2 forms
+                    </h3>
                   </div>
                 </div>
               </div>
-            </div>
-            
-            <div className="grid gap-4">
+              
               <div className="rounded-md border p-4">
                 <div className="flex items-center justify-between mb-4">
-                  <h4 className="font-medium">Employer: Acme Inc.</h4>
+                  <h4 className="font-medium">Wages and Tax Information</h4>
                   <Badge variant="outline">W-2</Badge>
                 </div>
                 
                 <div className="grid gap-4 md:grid-cols-2">
-                  <div className="space-y-2">
-                    <Label htmlFor="wages">Wages, Tips, Compensation</Label>
-                    <Input id="wages" defaultValue="72000.00" />
-                  </div>
+                  <FormField
+                    control={form.control}
+                    name="wages"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Wages, Tips, Compensation</FormLabel>
+                        <FormControl>
+                          <Input 
+                            type="number" 
+                            step="0.01"
+                            placeholder="0.00" 
+                            {...field}
+                            onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
                   
-                  <div className="space-y-2">
-                    <Label htmlFor="federal-withheld">Federal Income Tax Withheld</Label>
-                    <Input id="federal-withheld" defaultValue="14400.00" />
-                  </div>
+                  <FormField
+                    control={form.control}
+                    name="federalWithheld"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Federal Income Tax Withheld</FormLabel>
+                        <FormControl>
+                          <Input 
+                            type="number" 
+                            step="0.01"
+                            placeholder="0.00" 
+                            {...field}
+                            onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
                   
-                  <div className="space-y-2">
-                    <Label htmlFor="ss-wages">Social Security Wages</Label>
-                    <Input id="ss-wages" defaultValue="72000.00" />
-                  </div>
+                  <FormField
+                    control={form.control}
+                    name="ssWages"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Social Security Wages</FormLabel>
+                        <FormControl>
+                          <Input 
+                            type="number" 
+                            step="0.01"
+                            placeholder="0.00" 
+                            {...field}
+                            onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
                   
-                  <div className="space-y-2">
-                    <Label htmlFor="ss-withheld">Social Security Tax Withheld</Label>
-                    <Input id="ss-withheld" defaultValue="4464.00" />
-                  </div>
+                  <FormField
+                    control={form.control}
+                    name="ssWithheld"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Social Security Tax Withheld</FormLabel>
+                        <FormControl>
+                          <Input 
+                            type="number" 
+                            step="0.01"
+                            placeholder="0.00" 
+                            {...field}
+                            onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
                 </div>
               </div>
-            </div>
-            
-            <Button variant="outline" className="w-full">
-              <Plus className="mr-2 h-4 w-4" /> Add Another Employer
-            </Button>
-          </div>
+            </form>
+          </Form>
         </TabsContent>
         
         <TabsContent value="other" className="space-y-6 pt-4">
-          <div className="space-y-4">
-            <div className="rounded-md bg-blue-50 p-4 dark:bg-blue-900/20">
-              <div className="flex">
-                <div className="flex-shrink-0">
-                  <Check className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-                </div>
-                <div className="ml-3">
-                  <h3 className="text-sm font-medium text-blue-800 dark:text-blue-300">
-                    We found the following interest income from your documents
-                  </h3>
-                  <div className="mt-2 text-sm text-blue-700 dark:text-blue-300">
-                    <p>1099-INT from First Bank with interest of $350.00</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-            
-            <div className="rounded-md border p-4">
-              <div className="flex items-center justify-between mb-4">
-                <h4 className="font-medium">First Bank</h4>
-                <Badge variant="outline">1099-INT</Badge>
-              </div>
-              
-              <div className="grid gap-4 md:grid-cols-2">
-                <div className="space-y-2">
-                  <Label htmlFor="interest-income">Interest Income</Label>
-                  <Input id="interest-income" defaultValue="350.00" />
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+              <div className="rounded-md border p-4">
+                <div className="flex items-center justify-between mb-4">
+                  <h4 className="font-medium">Interest Income</h4>
+                  <Badge variant="outline">1099-INT</Badge>
                 </div>
                 
-                <div className="space-y-2">
-                  <Label htmlFor="tax-exempt-interest">Tax-Exempt Interest</Label>
-                  <Input id="tax-exempt-interest" defaultValue="0.00" />
+                <div className="grid gap-4 md:grid-cols-2">
+                  <FormField
+                    control={form.control}
+                    name="interestIncome"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Interest Income</FormLabel>
+                        <FormControl>
+                          <Input 
+                            type="number" 
+                            step="0.01"
+                            placeholder="0.00" 
+                            {...field}
+                            onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={form.control}
+                    name="taxExemptInterest"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Tax-Exempt Interest</FormLabel>
+                        <FormControl>
+                          <Input 
+                            type="number" 
+                            step="0.01"
+                            placeholder="0.00" 
+                            {...field}
+                            onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
                 </div>
               </div>
-            </div>
-            
-            <div className="space-y-4">
-              <h4 className="font-medium">Add Additional Income Sources</h4>
-              
-              <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-                <Button variant="outline" className="justify-start h-auto py-3">
-                  <div className="flex flex-col items-start">
-                    <span>Dividends</span>
-                    <span className="text-xs text-muted-foreground">1099-DIV</span>
-                  </div>
-                </Button>
-
-                <Button variant="outline" className="justify-start h-auto py-3">
-                  <div className="flex flex-col items-start">
-                    <span>Self-Employment</span>
-                    <span className="text-xs text-muted-foreground">Schedule C</span>
-                  </div>
-                </Button>
-
-                <Button variant="outline" className="justify-start h-auto py-3">
-                  <div className="flex flex-col items-start">
-                    <span>Rental Income</span>
-                    <span className="text-xs text-muted-foreground">Schedule E</span>
-                  </div>
-                </Button>
-
-                <Button variant="outline" className="justify-start h-auto py-3">
-                  <div className="flex flex-col items-start">
-                    <span>Capital Gains</span>
-                    <span className="text-xs text-muted-foreground">1099-B, Schedule D</span>
-                  </div>
-                </Button>
-
-                <Button variant="outline" className="justify-start h-auto py-3">
-                  <div className="flex flex-col items-start">
-                    <span>Retirement Income</span>
-                    <span className="text-xs text-muted-foreground">1099-R</span>
-                  </div>
-                </Button>
-
-                <Button variant="outline" className="justify-start h-auto py-3">
-                  <div className="flex flex-col items-start">
-                    <span>Other Income</span>
-                    <span className="text-xs text-muted-foreground">Miscellaneous</span>
-                  </div>
-                </Button>
-              </div>
-            </div>
-          </div>
+            </form>
+          </Form>
         </TabsContent>
       </Tabs>
 
@@ -244,11 +330,8 @@ const IncomeStep: React.FC<IncomeStepProps> = ({ onNext, onPrevious }) => {
         }}>
           Back to Personal Info
         </Button>
-        <Button onClick={() => {
-          speak("Proceeding to deductions step. You can choose between standard or itemized deductions.");
-          onNext();
-        }}>
-          Continue to Deductions
+        <Button onClick={form.handleSubmit(onSubmit)} disabled={form.formState.isSubmitting}>
+          {form.formState.isSubmitting ? "Saving..." : "Continue to Deductions"}
         </Button>
       </div>
     </div>

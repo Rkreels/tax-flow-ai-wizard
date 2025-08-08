@@ -1,437 +1,281 @@
 
 import React, { useState } from "react";
 import MainLayout from "@/components/layout/MainLayout";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Eye, FileText, Trash2, Upload, User } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
-import { User, Lock, File, Bell, Camera } from "lucide-react";
 import { useVoiceAssistant } from "@/contexts/VoiceAssistantContext";
+import DocumentViewer from "@/components/documents/DocumentViewer";
+import DocumentUpload from "@/components/documents/DocumentUpload";
+import ProfileSettings from "@/components/profile/ProfileSettings";
+
+interface TaxDocument {
+  id: string;
+  name: string;
+  type: string;
+  size: string;
+  uploadDate: string;
+  category: "income" | "deduction" | "personal" | "other";
+  taxYear: string;
+  file?: File;
+}
 
 const ProfilePage: React.FC = () => {
   const { user } = useAuth();
   const { speak } = useVoiceAssistant();
-  const [profileData, setProfileData] = useState({
-    name: user?.name || "",
-    email: user?.email || "",
-    phone: "+1 (555) 123-4567",
-    address: "123 Tax Street, San Francisco, CA 94107",
-    company: "TaxFlow Inc."
-  });
-  
-  const [passwordData, setPasswordData] = useState({
-    current: "",
-    new: "",
-    confirm: ""
-  });
+  const [activeTab, setActiveTab] = useState<'profile' | 'documents'>('profile');
+  const [documents, setDocuments] = useState<TaxDocument[]>([
+    {
+      id: "1",
+      name: "W-2_2023_AcmeInc.pdf",
+      type: "PDF",
+      size: "245 KB",
+      uploadDate: "2024-01-15",
+      category: "income",
+      taxYear: "2023"
+    },
+    {
+      id: "2",
+      name: "1099-INT_2023_FirstBank.pdf",
+      type: "PDF",
+      size: "123 KB",
+      uploadDate: "2024-01-20",
+      category: "income",
+      taxYear: "2023"
+    },
+    {
+      id: "3",
+      name: "MortgageInterest_2023.pdf",
+      type: "PDF",
+      size: "189 KB",
+      uploadDate: "2024-01-25",
+      category: "deduction",
+      taxYear: "2023"
+    }
+  ]);
 
-  const [notifications, setNotifications] = useState({
-    email: true,
-    taxUpdates: false,
-    returnStatus: true,
-    marketing: false
-  });
+  const [selectedDocument, setSelectedDocument] = useState<TaxDocument | null>(null);
+  const [isViewerOpen, setIsViewerOpen] = useState(false);
+  const [isUploadOpen, setIsUploadOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
-  // Voice guidance when page loads
   React.useEffect(() => {
-    speak("Profile page loaded. Here you can manage your personal information, security settings, and documents. Use the tabs to navigate between different sections.");
-  }, [speak]);
+    speak(`${user?.name}'s profile page. Manage your personal information, notification preferences, and uploaded tax documents.`);
+  }, [speak, user?.name]);
 
-  const handleSaveProfile = () => {
-    speak("Saving your profile information.");
-    // Simulate API call
-    setTimeout(() => {
-      toast.success("Profile updated successfully");
-      speak("Your profile has been updated successfully.");
-    }, 500);
+  const handleViewDocument = (document: TaxDocument) => {
+    speak(`Opening ${document.name} for viewing.`);
+    setSelectedDocument(document);
+    setIsViewerOpen(true);
   };
-  
-  const handleSavePassword = () => {
-    if (passwordData.new !== passwordData.confirm) {
-      toast.error("New passwords don't match");
-      speak("Password update failed. The new passwords don't match.");
-      return;
+
+  const handleDeleteDocument = (document: TaxDocument) => {
+    speak(`Preparing to delete ${document.name}. Please confirm this action.`);
+    setSelectedDocument(document);
+    setIsDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = () => {
+    if (selectedDocument) {
+      setDocuments(documents.filter(doc => doc.id !== selectedDocument.id));
+      toast.success("Document deleted successfully");
+      speak(`${selectedDocument.name} has been deleted.`);
+      setIsDeleteDialogOpen(false);
+      setSelectedDocument(null);
     }
-    
-    if (passwordData.new.length < 6) {
-      toast.error("Password must be at least 6 characters");
-      speak("Password update failed. Password must be at least 6 characters long.");
-      return;
+  };
+
+  const handleUploadDocument = (document: TaxDocument) => {
+    setDocuments([...documents, document]);
+  };
+
+  const getCategoryColor = (category: string) => {
+    switch (category) {
+      case "income": return "bg-green-100 text-green-800";
+      case "deduction": return "bg-blue-100 text-blue-800";
+      case "personal": return "bg-purple-100 text-purple-800";
+      default: return "bg-gray-100 text-gray-800";
     }
-
-    speak("Updating your password.");
-    // Simulate API call
-    setTimeout(() => {
-      toast.success("Password updated successfully");
-      speak("Your password has been updated successfully.");
-      setPasswordData({ current: "", new: "", confirm: "" });
-    }, 500);
   };
 
-  const handleSaveNotifications = () => {
-    speak("Saving your notification preferences.");
-    // Simulate API call
-    setTimeout(() => {
-      toast.success("Notification preferences saved");
-      speak("Your notification preferences have been saved.");
-    }, 500);
-  };
-
-  const handleUploadPicture = () => {
-    speak("Opening file selector to upload a new profile picture.");
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.accept = 'image/*';
-    input.onchange = (e) => {
-      const file = (e.target as HTMLInputElement).files?.[0];
-      if (file) {
-        toast.success("Profile picture uploaded");
-        speak("Profile picture has been uploaded successfully.");
-      }
-    };
-    input.click();
-  };
-
-  const handleViewDocument = (docName: string, url: string) => {
-    speak(`Opening ${docName} for viewing.`);
-    // Open document in new tab/window
-    window.open(url, '_blank');
-  };
-
-  const handleDeleteDocument = (docName: string) => {
-    speak(`Deleting ${docName}.`);
-    toast.success(`${docName} deleted successfully`);
-  };
-
-  const handleUploadDocument = () => {
-    speak("Opening file selector to upload a new document.");
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.accept = '.pdf,.doc,.docx,.jpg,.png';
-    input.onchange = (e) => {
-      const file = (e.target as HTMLInputElement).files?.[0];
-      if (file) {
-        toast.success("Document uploaded successfully");
-        speak("Document has been uploaded successfully.");
-      }
-    };
-    input.click();
-  };
-
-  const getInitials = (name: string) => {
-    return name
-      .split(" ")
-      .map((n) => n[0])
-      .join("")
-      .toUpperCase();
-  };
+  if (!user) return null;
 
   return (
-    <MainLayout>
+    <MainLayout requiredPermission="view_profile">
       <div className="space-y-6">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-          <div className="flex flex-col md:flex-row md:items-center gap-4">
-            <Avatar className="h-20 w-20">
-              {user?.avatar && <AvatarImage src={user.avatar} alt={user.name} />}
-              <AvatarFallback className="text-xl">{user?.name ? getInitials(user.name) : "U"}</AvatarFallback>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-4">
+            <Avatar className="h-16 w-16">
+              <AvatarImage src={user.avatar} alt={user.name} />
+              <AvatarFallback>
+                <User className="h-8 w-8" />
+              </AvatarFallback>
             </Avatar>
             <div>
-              <h1 className="text-3xl font-bold tracking-tight">{user?.name}</h1>
-              <p className="text-muted-foreground">{user?.email}</p>
-              <p className="text-sm capitalize">Role: {user?.role}</p>
+              <h1 className="text-3xl font-bold tracking-tight">{user.name}</h1>
+              <p className="text-muted-foreground">{user.email}</p>
+              <Badge variant="outline" className="mt-1 capitalize">
+                {user.role}
+              </Badge>
             </div>
           </div>
-          <Button onClick={handleUploadPicture}>
-            <Camera className="mr-2 h-4 w-4" />
-            Upload Picture
-          </Button>
         </div>
 
-        <Tabs defaultValue="profile" className="w-full">
-          <TabsList className="grid w-full md:w-auto md:inline-grid grid-cols-3 md:grid-cols-3">
-            <TabsTrigger value="profile" onClick={() => speak("Profile information tab selected.")}>Profile</TabsTrigger>
-            <TabsTrigger value="security" onClick={() => speak("Security settings tab selected.")}>Security</TabsTrigger>
-            <TabsTrigger value="documents" onClick={() => speak("Documents management tab selected.")}>Documents</TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="profile" className="space-y-4 pt-4">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <User className="h-5 w-5" />
-                  Personal Information
-                </CardTitle>
-                <CardDescription>
-                  Update your personal information and contact details
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="name">Full Name</Label>
-                    <Input 
-                      id="name" 
-                      value={profileData.name}
-                      onChange={(e) => setProfileData({...profileData, name: e.target.value})}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="email">Email</Label>
-                    <Input 
-                      id="email" 
-                      type="email" 
-                      value={profileData.email}
-                      onChange={(e) => setProfileData({...profileData, email: e.target.value})}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="phone">Phone Number</Label>
-                    <Input 
-                      id="phone" 
-                      value={profileData.phone}
-                      onChange={(e) => setProfileData({...profileData, phone: e.target.value})}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="company">Company</Label>
-                    <Input 
-                      id="company" 
-                      value={profileData.company}
-                      onChange={(e) => setProfileData({...profileData, company: e.target.value})}
-                    />
-                  </div>
-                  <div className="space-y-2 md:col-span-2">
-                    <Label htmlFor="address">Address</Label>
-                    <Input 
-                      id="address" 
-                      value={profileData.address}
-                      onChange={(e) => setProfileData({...profileData, address: e.target.value})}
-                    />
-                  </div>
-                </div>
-              </CardContent>
-              <CardFooter>
-                <Button onClick={handleSaveProfile}>Save Changes</Button>
-              </CardFooter>
-            </Card>
-            
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Bell className="h-5 w-5" />
-                  Notification Preferences
-                </CardTitle>
-                <CardDescription>
-                  Manage how you receive notifications and updates
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <Label htmlFor="email-notifications">Email notifications</Label>
-                    <p className="text-sm text-muted-foreground">Receive general notifications via email</p>
-                  </div>
-                  <input 
-                    type="checkbox" 
-                    id="email-notifications" 
-                    checked={notifications.email}
-                    onChange={(e) => setNotifications({...notifications, email: e.target.checked})}
-                    className="rounded border-gray-300" 
-                  />
-                </div>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <Label htmlFor="tax-updates">Tax law updates</Label>
-                    <p className="text-sm text-muted-foreground">Stay informed about tax law changes</p>
-                  </div>
-                  <input 
-                    type="checkbox" 
-                    id="tax-updates" 
-                    checked={notifications.taxUpdates}
-                    onChange={(e) => setNotifications({...notifications, taxUpdates: e.target.checked})}
-                    className="rounded border-gray-300" 
-                  />
-                </div>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <Label htmlFor="return-status">Return status changes</Label>
-                    <p className="text-sm text-muted-foreground">Get notified when your return status changes</p>
-                  </div>
-                  <input 
-                    type="checkbox" 
-                    id="return-status" 
-                    checked={notifications.returnStatus}
-                    onChange={(e) => setNotifications({...notifications, returnStatus: e.target.checked})}
-                    className="rounded border-gray-300" 
-                  />
-                </div>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <Label htmlFor="marketing">Marketing communications</Label>
-                    <p className="text-sm text-muted-foreground">Receive promotional emails and offers</p>
-                  </div>
-                  <input 
-                    type="checkbox" 
-                    id="marketing" 
-                    checked={notifications.marketing}
-                    onChange={(e) => setNotifications({...notifications, marketing: e.target.checked})}
-                    className="rounded border-gray-300" 
-                  />
-                </div>
-              </CardContent>
-              <CardFooter>
-                <Button onClick={handleSaveNotifications}>Save Preferences</Button>
-              </CardFooter>
-            </Card>
-          </TabsContent>
-          
-          <TabsContent value="security" className="space-y-4 pt-4">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Lock className="h-5 w-5" />
-                  Change Password
-                </CardTitle>
-                <CardDescription>
-                  Update your password to keep your account secure
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="current-password">Current Password</Label>
-                  <Input 
-                    id="current-password" 
-                    type="password" 
-                    value={passwordData.current}
-                    onChange={(e) => setPasswordData({...passwordData, current: e.target.value})}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="new-password">New Password</Label>
-                  <Input 
-                    id="new-password" 
-                    type="password" 
-                    value={passwordData.new}
-                    onChange={(e) => setPasswordData({...passwordData, new: e.target.value})}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="confirm-password">Confirm New Password</Label>
-                  <Input 
-                    id="confirm-password" 
-                    type="password" 
-                    value={passwordData.confirm}
-                    onChange={(e) => setPasswordData({...passwordData, confirm: e.target.value})}
-                  />
-                </div>
-              </CardContent>
-              <CardFooter>
-                <Button onClick={handleSavePassword}>Update Password</Button>
-              </CardFooter>
-            </Card>
-            
-            <Card>
-              <CardHeader>
-                <CardTitle>Two-Factor Authentication</CardTitle>
-                <CardDescription>
-                  Add an extra layer of security to your account
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <p>Two-factor authentication is not enabled yet.</p>
-                <p className="text-sm text-muted-foreground">
-                  Two-factor authentication adds an extra layer of security to your account by requiring more than just a password to sign in.
-                </p>
-              </CardContent>
-              <CardFooter>
-                <Button onClick={() => {
-                  speak("Two-factor authentication setup coming soon.");
-                  toast.info("Two-factor authentication setup coming soon");
-                }}>Enable 2FA</Button>
-              </CardFooter>
-            </Card>
-          </TabsContent>
-          
-          <TabsContent value="documents" className="space-y-4 pt-4">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <File className="h-5 w-5" />
-                  My Documents
-                </CardTitle>
-                <CardDescription>
-                  View and manage your uploaded tax documents
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="border rounded-md p-4">
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                    <div>
-                      <h3 className="font-semibold">W-2 Form (2023)</h3>
-                      <p className="text-sm text-muted-foreground">Uploaded on: April 5, 2025</p>
+        {/* Tab Navigation */}
+        <div className="border-b">
+          <nav className="flex space-x-8">
+            <button
+              onClick={() => {
+                setActiveTab('profile');
+                speak("Profile settings tab selected.");
+              }}
+              className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                activeTab === 'profile'
+                  ? 'border-primary text-primary'
+                  : 'border-transparent text-muted-foreground hover:text-foreground hover:border-gray-300'
+              }`}
+            >
+              Profile Settings
+            </button>
+            <button
+              onClick={() => {
+                setActiveTab('documents');
+                speak("Documents tab selected. View and manage your uploaded tax documents.");
+              }}
+              className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                activeTab === 'documents'
+                  ? 'border-primary text-primary'
+                  : 'border-transparent text-muted-foreground hover:text-foreground hover:border-gray-300'
+              }`}
+            >
+              My Documents ({documents.length})
+            </button>
+          </nav>
+        </div>
+
+        {/* Tab Content */}
+        {activeTab === 'profile' && <ProfileSettings />}
+
+        {activeTab === 'documents' && (
+          <div className="space-y-6">
+            <div className="flex items-center justify-between">
+              <h2 className="text-2xl font-bold">My Documents</h2>
+              <Button onClick={() => {
+                speak("Opening document upload dialog.");
+                setIsUploadOpen(true);
+              }}>
+                <Upload className="mr-2 h-4 w-4" /> Upload Document
+              </Button>
+            </div>
+
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {documents.map((document) => (
+                <Card key={document.id} className="overflow-hidden">
+                  <CardHeader className="pb-3">
+                    <div className="flex items-start justify-between">
+                      <FileText className="h-5 w-5 text-muted-foreground" />
+                      <Badge variant="outline" className={getCategoryColor(document.category)}>
+                        {document.category}
+                      </Badge>
+                    </div>
+                    <CardTitle className="text-lg">{document.name}</CardTitle>
+                    <CardDescription>
+                      {document.type} • {document.size} • {document.taxYear}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="pt-0">
+                    <div className="text-sm text-muted-foreground mb-3">
+                      Uploaded: {document.uploadDate}
                     </div>
                     <div className="flex space-x-2">
-                      <Button 
-                        size="sm" 
+                      <Button
+                        size="sm"
                         variant="outline"
-                        onClick={() => handleViewDocument("W-2 Form (2023)", "/documents/w2-2023.pdf")}
+                        onClick={() => handleViewDocument(document)}
                       >
-                        View
+                        <Eye className="h-4 w-4" />
+                        <span className="sr-only">View</span>
                       </Button>
-                      <Button 
-                        size="sm" 
+                      
+                      <Button
+                        size="sm"
                         variant="outline"
-                        onClick={() => handleDeleteDocument("W-2 Form (2023)")}
+                        className="text-destructive hover:bg-destructive hover:text-destructive-foreground"
+                        onClick={() => handleDeleteDocument(document)}
                       >
-                        Delete
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-                
-                <div className="border rounded-md p-4">
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                    <div>
-                      <h3 className="font-semibold">1099-INT (2023)</h3>
-                      <p className="text-sm text-muted-foreground">Uploaded on: April 10, 2025</p>
-                    </div>
-                    <div className="flex space-x-2">
-                      <Button 
-                        size="sm" 
-                        variant="outline"
-                        onClick={() => handleViewDocument("1099-INT (2023)", "/documents/1099-int-2023.pdf")}
-                      >
-                        View
-                      </Button>
-                      <Button 
-                        size="sm" 
-                        variant="outline"
-                        onClick={() => handleDeleteDocument("1099-INT (2023)")}
-                      >
-                        Delete
+                        <Trash2 className="h-4 w-4" />
+                        <span className="sr-only">Delete</span>
                       </Button>
                     </div>
-                  </div>
-                </div>
-                
-                <div className="border rounded-md p-4 border-dashed border-gray-300 flex flex-col items-center justify-center gap-2 p-6">
-                  <div className="rounded-full bg-gray-100 p-3">
-                    <File className="h-6 w-6 text-gray-500" />
-                  </div>
-                  <p className="text-sm text-center font-medium">Drag and drop files here or click to browse</p>
-                  <p className="text-xs text-center text-gray-500">Upload your tax-related documents here</p>
-                  <Button size="sm" variant="outline" className="mt-2" onClick={handleUploadDocument}>
-                    Upload Document
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+
+            {documents.length === 0 && (
+              <Card>
+                <CardContent className="flex flex-col items-center justify-center py-12">
+                  <FileText className="h-12 w-12 text-muted-foreground mb-4" />
+                  <h3 className="text-lg font-semibold mb-2">No documents uploaded</h3>
+                  <p className="text-muted-foreground text-center mb-4">
+                    Upload your tax documents to keep them organized and easily accessible.
+                  </p>
+                  <Button onClick={() => setIsUploadOpen(true)}>
+                    <Upload className="mr-2 h-4 w-4" /> Upload Your First Document
                   </Button>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
+                </CardContent>
+              </Card>
+            )}
+          </div>
+        )}
+
+        {/* Document Viewer Modal */}
+        <DocumentViewer
+          document={selectedDocument}
+          isOpen={isViewerOpen}
+          onClose={() => {
+            speak("Closing document viewer.");
+            setIsViewerOpen(false);
+          }}
+        />
+
+        {/* Document Upload Modal */}
+        <DocumentUpload
+          isOpen={isUploadOpen}
+          onClose={() => {
+            speak("Closing document upload dialog.");
+            setIsUploadOpen(false);
+          }}
+          onUpload={handleUploadDocument}
+        />
+
+        {/* Delete Confirmation Dialog */}
+        <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>Delete Document</DialogTitle>
+              <DialogDescription>
+                Are you sure you want to delete {selectedDocument?.name}? This action cannot be undone.
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => {
+                speak("Document deletion canceled.");
+                setIsDeleteDialogOpen(false);
+              }}>
+                Cancel
+              </Button>
+              <Button variant="destructive" onClick={confirmDelete}>
+                Delete
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </MainLayout>
   );

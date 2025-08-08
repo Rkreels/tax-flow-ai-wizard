@@ -1,217 +1,174 @@
 
-import React, { useState, useEffect } from "react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { ArrowLeft, ArrowRight, Save, CheckCircle2, HelpCircle } from "lucide-react";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { toast } from "sonner";
-import { useVoiceAssistant } from "@/contexts/VoiceAssistantContext";
+import React, { useState } from "react";
+import { Progress } from "@/components/ui/progress";
 import PersonalInfoStep from "./steps/PersonalInfoStep";
 import IncomeStep from "./steps/IncomeStep";
 import DeductionsStep from "./steps/DeductionsStep";
 import ReviewStep from "./steps/ReviewStep";
+import { useTaxFiling } from "@/hooks/useTaxFiling";
+import { useVoiceAssistant } from "@/contexts/VoiceAssistantContext";
+import { PersonalInfoForm, IncomeForm, DeductionsForm } from "@/utils/formValidation";
+import { useSearchParams } from "react-router-dom";
 
-export type TaxFilingStep = "personal" | "income" | "deductions" | "review";
-
-const steps: { id: TaxFilingStep; label: string }[] = [
-  { id: "personal", label: "Personal Information" },
-  { id: "income", label: "Income" },
-  { id: "deductions", label: "Deductions" },
-  { id: "review", label: "Review & Submit" },
+const steps = [
+  { title: "Personal Info", description: "Basic information" },
+  { title: "Income", description: "Income sources" },
+  { title: "Deductions", description: "Deductions & credits" },
+  { title: "Review", description: "Review & submit" },
 ];
 
 const TaxFilingWizard: React.FC = () => {
+  const [searchParams] = useSearchParams();
+  const returnId = searchParams.get('id') || undefined;
+  
+  const {
+    taxReturn,
+    isLoading,
+    currentStep,
+    setCurrentStep,
+    savePersonalInfo,
+    saveIncome,
+    saveDeductions,
+    submitTaxReturn,
+    calculateRefund,
+    isComplete
+  } = useTaxFiling(returnId);
+  
   const { speak } = useVoiceAssistant();
-  const [currentStep, setCurrentStep] = useState<TaxFilingStep>("personal");
-  const [completedSteps, setCompletedSteps] = useState<Set<TaxFilingStep>>(new Set());
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
 
-  // Provide voice guidance when component mounts
-  useEffect(() => {
-    speak("Welcome to the tax filing wizard. Complete each step to file your tax return. You are currently on the personal information step.");
-  }, [speak]);
+  const progress = ((currentStep + 1) / steps.length) * 100;
 
-  const currentStepIndex = steps.findIndex((step) => step.id === currentStep);
-
-  const handleNext = () => {
-    // Mark current step as completed
-    const newCompletedSteps = new Set(completedSteps);
-    newCompletedSteps.add(currentStep);
-    setCompletedSteps(newCompletedSteps);
-
-    // Move to the next step
-    if (currentStepIndex < steps.length - 1) {
-      const nextStep = steps[currentStepIndex + 1];
-      setCurrentStep(nextStep.id);
-      speak(`Moving to ${nextStep.label} step.`);
-    }
+  const handlePersonalInfoSave = async (data: PersonalInfoForm) => {
+    await savePersonalInfo(data);
+    setCurrentStep(1);
   };
 
-  const handlePrevious = () => {
-    if (currentStepIndex > 0) {
-      const prevStep = steps[currentStepIndex - 1];
-      setCurrentStep(prevStep.id);
-      speak(`Going back to ${prevStep.label} step.`);
-    }
+  const handleIncomeSave = async (data: IncomeForm) => {
+    await saveIncome(data);
+    setCurrentStep(2);
   };
 
-  const handleSave = async () => {
-    setIsSaving(true);
-    speak("Saving your tax return progress.");
-    
-    // Simulate save operation
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    
-    toast.success("Tax return saved successfully");
-    speak("Your tax return has been saved. You can continue filing later from where you left off.");
-    setIsSaving(false);
+  const handleDeductionsSave = async (data: DeductionsForm) => {
+    await saveDeductions(data);
+    setCurrentStep(3);
   };
 
   const handleSubmit = async () => {
     setIsSubmitting(true);
-    speak("Submitting your tax return to the IRS. Please wait.");
-    
-    // Simulate submission process
-    await new Promise(resolve => setTimeout(resolve, 3000));
-    
-    toast.success("Tax return submitted successfully!");
-    speak("Congratulations! Your tax return has been successfully submitted to the IRS. You will receive a confirmation email shortly.");
+    const success = await submitTaxReturn();
+    if (success) {
+      speak("Your tax return has been successfully submitted to the IRS. You will receive a confirmation email shortly.");
+      // In a real app, redirect to a success page or dashboard
+      setTimeout(() => {
+        window.location.href = '/returns';
+      }, 3000);
+    }
     setIsSubmitting(false);
   };
 
-  const handleHelp = () => {
-    speak("Opening tax assistant for help. You can ask questions about tax filing, deductions, or any step in the process.");
-    // In a real app, this would open the tax assistant
-    toast.info("Tax assistant is available to help you with any questions");
-  };
-
-  const renderStepContent = () => {
-    switch (currentStep) {
-      case "personal":
-        return <PersonalInfoStep onNext={handleNext} />;
-      case "income":
-        return <IncomeStep onNext={handleNext} onPrevious={handlePrevious} />;
-      case "deductions":
-        return <DeductionsStep onNext={handleNext} onPrevious={handlePrevious} />;
-      case "review":
-        return <ReviewStep onPrevious={handlePrevious} />;
-      default:
-        return null;
+  const handleNext = () => {
+    if (currentStep < steps.length - 1) {
+      setCurrentStep(currentStep + 1);
     }
   };
 
+  const handlePrevious = () => {
+    if (currentStep > 0) {
+      setCurrentStep(currentStep - 1);
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+          <p>Loading your tax return...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
-      <div className="mb-8">
-        <h1 className="mb-2 text-2xl font-bold">File Your Tax Return</h1>
-        <p className="text-muted-foreground">Complete each step to file your tax return.</p>
-      </div>
-
-      <div className="relative mb-8">
-        <div className="absolute left-0 right-0 h-1 top-5 bg-gray-200 dark:bg-gray-700"></div>
-        <div
-          className="absolute left-0 h-1 top-5 bg-gradient-to-r from-taxBlue-600 to-taxTeal-500"
-          style={{
-            width: `${((currentStepIndex + 0.5) / steps.length) * 100}%`,
-            transition: "width 0.5s ease-in-out",
-          }}
-        ></div>
-        <div className="relative flex justify-between items-center">
-          {steps.map((step, index) => {
-            const isActive = step.id === currentStep;
-            const isCompleted = completedSteps.has(step.id);
-            const isPending = index > currentStepIndex && !isCompleted;
-
-            return (
-              <div key={step.id} className="flex flex-col items-center">
-                <div
-                  className={`h-10 w-10 flex items-center justify-center rounded-full border-2 z-10 ${
-                    isActive
-                      ? "border-taxBlue-600 bg-white text-taxBlue-600 dark:bg-gray-900 dark:text-blue-400"
-                      : isCompleted
-                      ? "border-green-500 bg-green-500 text-white"
-                      : "border-gray-300 bg-white text-gray-400 dark:bg-gray-800 dark:border-gray-600"
-                  }`}
-                >
-                  {isCompleted ? (
-                    <CheckCircle2 className="h-5 w-5" />
-                  ) : (
-                    <span>{index + 1}</span>
-                  )}
-                </div>
-                <span
-                  className={`mt-2 text-xs font-medium ${
-                    isActive
-                      ? "text-taxBlue-600 dark:text-blue-400"
-                      : isPending
-                      ? "text-gray-400 dark:text-gray-500"
-                      : "text-gray-600 dark:text-gray-300"
-                  }`}
-                >
-                  {step.label}
-                </span>
-              </div>
-            );
-          })}
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <h1 className="text-2xl font-bold">Tax Filing Wizard</h1>
+          <div className="text-sm text-muted-foreground">
+            Step {currentStep + 1} of {steps.length}
+          </div>
         </div>
-      </div>
-
-      <Card className="border shadow-sm">
-        <CardContent className="p-6">{renderStepContent()}</CardContent>
-      </Card>
-
-      <div className="flex justify-between mt-6">
-        <Button
-          variant="outline"
-          onClick={handlePrevious}
-          disabled={currentStepIndex === 0}
-        >
-          <ArrowLeft className="mr-2 h-4 w-4" /> Previous
-        </Button>
         
-        <div className="flex space-x-2">
-          <Button 
-            variant="outline" 
-            onClick={handleSave}
-            disabled={isSaving}
-          >
-            <Save className="mr-2 h-4 w-4" /> 
-            {isSaving ? "Saving..." : "Save for Later"}
-          </Button>
-          
-          {currentStep !== "review" && (
-            <Button onClick={handleNext}>
-              Next <ArrowRight className="ml-2 h-4 w-4" />
-            </Button>
-          )}
-          
-          {currentStep === "review" && (
-            <Button 
-              className="bg-green-600 hover:bg-green-700"
-              onClick={handleSubmit}
-              disabled={isSubmitting}
-            >
-              {isSubmitting ? "Submitting..." : "Submit Return"} 
-              <CheckCircle2 className="ml-2 h-4 w-4" />
-            </Button>
-          )}
+        <Progress value={progress} className="w-full" />
+        
+        <div className="flex justify-center">
+          <div className="flex space-x-8">
+            {steps.map((step, index) => (
+              <div
+                key={index}
+                className={`flex flex-col items-center space-y-2 ${
+                  index <= currentStep
+                    ? "text-primary"
+                    : "text-muted-foreground"
+                }`}
+              >
+                <div
+                  className={`flex items-center justify-center w-8 h-8 rounded-full border-2 ${
+                    index < currentStep
+                      ? "bg-primary border-primary text-primary-foreground"
+                      : index === currentStep
+                      ? "border-primary bg-background"
+                      : "border-muted"
+                  }`}
+                >
+                  {index < currentStep ? "✓" : index + 1}
+                </div>
+                <div className="text-center">
+                  <div className="text-sm font-medium">{step.title}</div>
+                  <div className="text-xs">{step.description}</div>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
-      
-      <div className="flex justify-center mt-6">
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button variant="ghost" size="sm" onClick={handleHelp}>
-                <HelpCircle className="mr-2 h-4 w-4" /> Need help?
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>Chat with our tax assistant for help</p>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
+
+      <div className="bg-card rounded-lg border p-6">
+        {currentStep === 0 && (
+          <PersonalInfoStep
+            onNext={handleNext}
+            onSave={handlePersonalInfoSave}
+            initialData={taxReturn?.personalInfo}
+          />
+        )}
+        {currentStep === 1 && (
+          <IncomeStep
+            onNext={handleNext}
+            onPrevious={handlePrevious}
+            onSave={handleIncomeSave}
+            initialData={taxReturn?.income}
+          />
+        )}
+        {currentStep === 2 && (
+          <DeductionsStep
+            onNext={handleNext}
+            onPrevious={handlePrevious}
+            onSave={handleDeductionsSave}
+            initialData={taxReturn?.deductions}
+          />
+        )}
+        {currentStep === 3 && (
+          <ReviewStep
+            onPrevious={handlePrevious}
+            onSubmit={handleSubmit}
+            personalInfo={taxReturn?.personalInfo || null}
+            income={taxReturn?.income || null}
+            deductions={taxReturn?.deductions || null}
+            refundAmount={calculateRefund()}
+            isSubmitting={isSubmitting}
+          />
+        )}
       </div>
     </div>
   );

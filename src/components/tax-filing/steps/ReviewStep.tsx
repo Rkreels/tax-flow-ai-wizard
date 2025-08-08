@@ -6,17 +6,64 @@ import { Separator } from "@/components/ui/separator";
 import { ArrowDown, Download, Printer } from "lucide-react";
 import { toast } from "sonner";
 import { useVoiceAssistant } from "@/contexts/VoiceAssistantContext";
+import { PersonalInfoForm, IncomeForm, DeductionsForm } from "@/utils/formValidation";
 
 interface ReviewStepProps {
   onPrevious: () => void;
+  onSubmit: () => void;
+  personalInfo: PersonalInfoForm | null;
+  income: IncomeForm | null;
+  deductions: DeductionsForm | null;
+  refundAmount: number;
+  isSubmitting: boolean;
 }
 
-const ReviewStep: React.FC<ReviewStepProps> = ({ onPrevious }) => {
+const ReviewStep: React.FC<ReviewStepProps> = ({ 
+  onPrevious, 
+  onSubmit, 
+  personalInfo, 
+  income, 
+  deductions,
+  refundAmount,
+  isSubmitting
+}) => {
   const { speak } = useVoiceAssistant();
 
   useEffect(() => {
-    speak("Review and submit step. Please review your tax return summary, personal information, income, and deductions before submitting. Your estimated refund is $5,018.");
-  }, [speak]);
+    const refundText = refundAmount > 0 ? `Your estimated refund is $${refundAmount.toLocaleString()}` : `You owe $${Math.abs(refundAmount).toLocaleString()}`;
+    speak(`Review and submit step. Please review your tax return summary, personal information, income, and deductions before submitting. ${refundText}.`);
+  }, [speak, refundAmount]);
+
+  if (!personalInfo || !income || !deductions) {
+    return (
+      <div className="space-y-6">
+        <div className="text-center">
+          <h2 className="text-xl font-semibold">Incomplete Tax Return</h2>
+          <p className="text-sm text-muted-foreground mt-2">
+            Please complete all previous steps before reviewing your return.
+          </p>
+          <Button className="mt-4" onClick={onPrevious}>
+            Back to Previous Step
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  const totalIncome = income.wages + income.interestIncome;
+  const standardDeduction = 13850;
+  const deductionAmount = deductions.deductionMethod === 'standard' ? standardDeduction : 
+    (deductions.medicalExpenses || 0) + 
+    (deductions.stateLocalTax || 0) + 
+    (deductions.realEstateTax || 0) + 
+    (deductions.mortgageInterest || 0) + 
+    (deductions.charitableCash || 0) + 
+    (deductions.charitableNonCash || 0);
+  
+  const adjustedGrossIncome = totalIncome;
+  const taxableIncome = Math.max(0, adjustedGrossIncome - deductionAmount);
+  const federalTax = taxableIncome * 0.22; // Simplified calculation
+  const finalRefund = income.federalWithheld - federalTax;
 
   const handlePrintPreview = () => {
     speak("Opening print preview of your tax return.");
@@ -39,25 +86,25 @@ const ReviewStep: React.FC<ReviewStepProps> = ({ onPrevious }) => {
           <body>
             <div class="header">
               <h1>2023 Tax Return Summary</h1>
-              <h2>John Doe</h2>
+              <h2>${personalInfo.firstName} ${personalInfo.lastName}</h2>
             </div>
             <div class="section summary">
               <h3>Tax Summary</h3>
-              <p><strong>Total Income:</strong> $72,350.00</p>
-              <p><strong>Adjusted Gross Income:</strong> $71,150.00</p>
-              <p><strong>Taxable Income:</strong> $57,300.00</p>
-              <p><strong>Federal Tax:</strong> $9,382.00</p>
-              <p><strong>Tax Already Paid:</strong> $14,400.00</p>
+              <p><strong>Total Income:</strong> $${totalIncome.toLocaleString()}</p>
+              <p><strong>Adjusted Gross Income:</strong> $${adjustedGrossIncome.toLocaleString()}</p>
+              <p><strong>Taxable Income:</strong> $${taxableIncome.toLocaleString()}</p>
+              <p><strong>Federal Tax:</strong> $${federalTax.toLocaleString()}</p>
+              <p><strong>Tax Already Paid:</strong> $${income.federalWithheld.toLocaleString()}</p>
               <div class="highlight">
-                <p><strong>Your Refund: $5,018.00</strong></p>
+                <p><strong>${finalRefund >= 0 ? 'Your Refund' : 'Amount Owed'}: $${Math.abs(finalRefund).toLocaleString()}</strong></p>
               </div>
             </div>
             <div class="section">
               <h3>Personal Information</h3>
-              <p>Name: John Doe</p>
-              <p>SSN: XXX-XX-6789</p>
-              <p>Filing Status: Single</p>
-              <p>Address: 123 Main St, San Francisco, CA 94105</p>
+              <p>Name: ${personalInfo.firstName} ${personalInfo.lastName}</p>
+              <p>SSN: XXX-XX-${personalInfo.ssn.slice(-4)}</p>
+              <p>Filing Status: ${personalInfo.filingStatus.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())}</p>
+              <p>Address: ${personalInfo.street}, ${personalInfo.city}, ${personalInfo.state} ${personalInfo.zipCode}</p>
             </div>
           </body>
         </html>
@@ -73,29 +120,28 @@ const ReviewStep: React.FC<ReviewStepProps> = ({ onPrevious }) => {
   const handleDownloadPDF = () => {
     speak("Downloading your tax return as a PDF file.");
     
-    // Create a downloadable file
     const content = `TAX RETURN SUMMARY 2023
 ======================
 
 TAXPAYER INFORMATION
-Name: John Doe
-SSN: XXX-XX-6789
-Filing Status: Single
-Address: 123 Main St, San Francisco, CA 94105
+Name: ${personalInfo.firstName} ${personalInfo.lastName}
+SSN: XXX-XX-${personalInfo.ssn.slice(-4)}
+Filing Status: ${personalInfo.filingStatus.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+Address: ${personalInfo.street}, ${personalInfo.city}, ${personalInfo.state} ${personalInfo.zipCode}
 
 INCOME SUMMARY
-Total Income: $72,350.00
-Wages (W-2): $72,000.00
-Interest (1099-INT): $350.00
+Total Income: $${totalIncome.toLocaleString()}
+Wages (W-2): $${income.wages.toLocaleString()}
+Interest (1099-INT): $${income.interestIncome.toLocaleString()}
 
 TAX CALCULATION
-Adjusted Gross Income: $71,150.00
-Standard Deduction: $13,850.00
-Taxable Income: $57,300.00
-Federal Tax: $9,382.00
-Tax Already Paid: $14,400.00
+Adjusted Gross Income: $${adjustedGrossIncome.toLocaleString()}
+${deductions.deductionMethod === 'standard' ? 'Standard' : 'Itemized'} Deduction: $${deductionAmount.toLocaleString()}
+Taxable Income: $${taxableIncome.toLocaleString()}
+Federal Tax: $${federalTax.toLocaleString()}
+Tax Already Paid: $${income.federalWithheld.toLocaleString()}
 
-REFUND: $5,018.00
+${finalRefund >= 0 ? 'REFUND' : 'AMOUNT OWED'}: $${Math.abs(finalRefund).toLocaleString()}
 
 Generated on: ${new Date().toLocaleDateString()}
 `;
@@ -103,23 +149,18 @@ Generated on: ${new Date().toLocaleDateString()}
     const element = window.document.createElement('a');
     const file = new Blob([content], { type: 'text/plain' });
     element.href = URL.createObjectURL(file);
-    element.download = 'Tax_Return_2023_Summary.txt';
+    element.download = `Tax_Return_2023_${personalInfo.firstName}_${personalInfo.lastName}.txt`;
     window.document.body.appendChild(element);
     element.click();
     window.document.body.removeChild(element);
     
-    toast.success("Tax return PDF downloaded");
+    toast.success("Tax return summary downloaded");
     speak("Your tax return summary has been downloaded to your device.");
   };
 
   const handleSaveForLater = () => {
-    speak("Saving your tax return for later completion.");
-    
-    // Simulate saving
-    setTimeout(() => {
-      toast.success("Tax return saved successfully");
-      speak("Your tax return has been saved. You can continue from where you left off later.");
-    }, 1000);
+    speak("Your tax return has already been saved automatically.");
+    toast.success("Tax return is automatically saved");
   };
 
   return (
@@ -139,47 +180,41 @@ Generated on: ${new Date().toLocaleDateString()}
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <span className="text-sm">Federal Filing Status</span>
-              <span className="font-medium">Single</span>
+              <span className="font-medium">{personalInfo.filingStatus.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())}</span>
             </div>
             <Separator />
             <div className="flex items-center justify-between">
               <span className="text-sm">Total Income</span>
-              <span className="font-medium">$72,350.00</span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-sm">Adjustments</span>
-              <span className="font-medium">-$1,200.00</span>
+              <span className="font-medium">${totalIncome.toLocaleString()}</span>
             </div>
             <div className="flex items-center justify-between">
               <span className="text-sm">Adjusted Gross Income</span>
-              <span className="font-medium">$71,150.00</span>
+              <span className="font-medium">${adjustedGrossIncome.toLocaleString()}</span>
             </div>
             <Separator />
             <div className="flex items-center justify-between">
-              <span className="text-sm">Standard Deduction</span>
-              <span className="font-medium">-$13,850.00</span>
+              <span className="text-sm">{deductions.deductionMethod === 'standard' ? 'Standard' : 'Itemized'} Deduction</span>
+              <span className="font-medium">-${deductionAmount.toLocaleString()}</span>
             </div>
             <div className="flex items-center justify-between">
               <span className="text-sm">Taxable Income</span>
-              <span className="font-medium">$57,300.00</span>
+              <span className="font-medium">${taxableIncome.toLocaleString()}</span>
             </div>
             <Separator />
             <div className="flex items-center justify-between">
               <span className="text-sm">Federal Tax</span>
-              <span className="font-medium">$9,382.00</span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-sm">Credits</span>
-              <span className="font-medium">-$0.00</span>
+              <span className="font-medium">${federalTax.toLocaleString()}</span>
             </div>
             <div className="flex items-center justify-between">
               <span className="text-sm">Tax Already Paid</span>
-              <span className="font-medium">-$14,400.00</span>
+              <span className="font-medium">-${income.federalWithheld.toLocaleString()}</span>
             </div>
             <Separator />
             <div className="flex items-center justify-between text-lg font-bold">
-              <span>Your Refund</span>
-              <span className="text-green-600 dark:text-green-400">$5,018.00</span>
+              <span>{finalRefund >= 0 ? 'Your Refund' : 'Amount Owed'}</span>
+              <span className={finalRefund >= 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"}>
+                ${Math.abs(finalRefund).toLocaleString()}
+              </span>
             </div>
           </div>
         </CardContent>
@@ -194,19 +229,19 @@ Generated on: ${new Date().toLocaleDateString()}
             <div className="space-y-2">
               <div className="grid grid-cols-2">
                 <span className="text-muted-foreground">Name:</span>
-                <span>John Doe</span>
+                <span>{personalInfo.firstName} {personalInfo.lastName}</span>
               </div>
               <div className="grid grid-cols-2">
                 <span className="text-muted-foreground">SSN:</span>
-                <span>XXX-XX-6789</span>
+                <span>XXX-XX-{personalInfo.ssn.slice(-4)}</span>
               </div>
               <div className="grid grid-cols-2">
                 <span className="text-muted-foreground">Filing Status:</span>
-                <span>Single</span>
+                <span>{personalInfo.filingStatus.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())}</span>
               </div>
               <div className="grid grid-cols-2">
                 <span className="text-muted-foreground">Address:</span>
-                <span>123 Main St, San Francisco, CA 94105</span>
+                <span>{personalInfo.street}, {personalInfo.city}, {personalInfo.state} {personalInfo.zipCode}</span>
               </div>
             </div>
           </CardContent>
@@ -220,19 +255,15 @@ Generated on: ${new Date().toLocaleDateString()}
             <div className="space-y-2">
               <div className="grid grid-cols-2">
                 <span className="text-muted-foreground">Wages (W-2):</span>
-                <span>$72,000.00</span>
+                <span>${income.wages.toLocaleString()}</span>
               </div>
               <div className="grid grid-cols-2">
                 <span className="text-muted-foreground">Interest (1099-INT):</span>
-                <span>$350.00</span>
-              </div>
-              <div className="grid grid-cols-2">
-                <span className="text-muted-foreground">Other Income:</span>
-                <span>$0.00</span>
+                <span>${income.interestIncome.toLocaleString()}</span>
               </div>
               <div className="grid grid-cols-2">
                 <span className="text-muted-foreground">Total Income:</span>
-                <span className="font-medium">$72,350.00</span>
+                <span className="font-medium">${totalIncome.toLocaleString()}</span>
               </div>
             </div>
           </CardContent>
@@ -247,15 +278,11 @@ Generated on: ${new Date().toLocaleDateString()}
           <div className="space-y-2">
             <div className="grid grid-cols-2">
               <span className="text-muted-foreground">Deduction Type:</span>
-              <span>Standard Deduction</span>
+              <span>{deductions.deductionMethod === 'standard' ? 'Standard Deduction' : 'Itemized Deductions'}</span>
             </div>
             <div className="grid grid-cols-2">
               <span className="text-muted-foreground">Deduction Amount:</span>
-              <span>$13,850.00</span>
-            </div>
-            <div className="grid grid-cols-2">
-              <span className="text-muted-foreground">Credits:</span>
-              <span>None claimed</span>
+              <span>${deductionAmount.toLocaleString()}</span>
             </div>
           </div>
         </CardContent>
@@ -284,11 +311,15 @@ Generated on: ${new Date().toLocaleDateString()}
       </div>
 
       <div className="pt-4 flex justify-between">
-        <Button variant="outline" onClick={onPrevious}>
+        <Button variant="outline" onClick={onPrevious} disabled={isSubmitting}>
           Back to Deductions
         </Button>
-        <Button className="bg-green-600 hover:bg-green-700">
-          Submit Tax Return
+        <Button 
+          className="bg-green-600 hover:bg-green-700" 
+          onClick={onSubmit}
+          disabled={isSubmitting}
+        >
+          {isSubmitting ? "Submitting..." : "Submit Tax Return"}
         </Button>
       </div>
     </div>
