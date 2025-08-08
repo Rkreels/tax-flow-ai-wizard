@@ -9,7 +9,8 @@ import { useTaxFiling } from "@/hooks/useTaxFiling";
 import { useVoiceAssistant } from "@/contexts/VoiceAssistantContext";
 import { PersonalInfoForm, IncomeForm, DeductionsForm } from "@/utils/formValidation";
 import { useSearchParams } from "react-router-dom";
-
+import { Input } from "@/components/ui/input";
+import { useAuth } from "@/contexts/AuthContext";
 const steps = [
   { title: "Personal Info", description: "Basic information" },
   { title: "Income", description: "Income sources" },
@@ -20,6 +21,7 @@ const steps = [
 const TaxFilingWizard: React.FC = () => {
   const [searchParams] = useSearchParams();
   const returnId = searchParams.get('id') || undefined;
+  const { user } = useAuth();
   
   const {
     taxReturn,
@@ -31,6 +33,7 @@ const TaxFilingWizard: React.FC = () => {
     saveDeductions,
     submitTaxReturn,
     calculateRefund,
+    updateReturnName,
     isComplete
   } = useTaxFiling(returnId);
   
@@ -93,10 +96,19 @@ const TaxFilingWizard: React.FC = () => {
   return (
     <div className="space-y-6">
       <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold">Tax Filing Wizard</h1>
-          <div className="text-sm text-muted-foreground">
-            Step {currentStep + 1} of {steps.length}
+        <div className="flex items-center justify-between gap-4">
+          <div className="flex-1">
+            <h1 className="text-2xl font-bold">Tax Filing Wizard</h1>
+            <div className="text-sm text-muted-foreground">
+              Step {currentStep + 1} of {steps.length}
+            </div>
+          </div>
+          <div className="w-72">
+            <Input
+              value={taxReturn?.name || ""}
+              onChange={(e) => updateReturnName(e.target.value)}
+              placeholder="Name this tax return"
+            />
           </div>
         </div>
         
@@ -167,6 +179,9 @@ const TaxFilingWizard: React.FC = () => {
             deductions={taxReturn?.deductions || null}
             refundAmount={calculateRefund()}
             isSubmitting={isSubmitting}
+            status={taxReturn?.status || 'draft'}
+            userRole={user?.role || 'user'}
+            requestedDocuments={taxReturn?.requestedDocuments || []}
           />
         )}
       </div>

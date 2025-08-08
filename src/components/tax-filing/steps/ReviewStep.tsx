@@ -16,6 +16,9 @@ interface ReviewStepProps {
   deductions: DeductionsForm | null;
   refundAmount: number;
   isSubmitting: boolean;
+  status: 'draft' | 'in_progress' | 'submitted' | 'approved' | 'needs_info' | 'resubmitted';
+  userRole: 'user' | 'admin' | 'support' | 'accountant';
+  requestedDocuments?: string[];
 }
 
 const ReviewStep: React.FC<ReviewStepProps> = ({ 
@@ -25,7 +28,10 @@ const ReviewStep: React.FC<ReviewStepProps> = ({
   income, 
   deductions,
   refundAmount,
-  isSubmitting
+  isSubmitting,
+  status,
+  userRole,
+  requestedDocuments = []
 }) => {
   const { speak } = useVoiceAssistant();
 
@@ -33,6 +39,9 @@ const ReviewStep: React.FC<ReviewStepProps> = ({
     const refundText = refundAmount > 0 ? `Your estimated refund is $${refundAmount.toLocaleString()}` : `You owe $${Math.abs(refundAmount).toLocaleString()}`;
     speak(`Review and submit step. Please review your tax return summary, personal information, income, and deductions before submitting. ${refundText}.`);
   }, [speak, refundAmount]);
+
+  const showSubmit = userRole !== 'user' ? true : (status !== 'submitted' && status !== 'approved');
+  const submitLabel = status === 'needs_info' && userRole === 'user' ? 'Resubmit' : 'Submit Tax Return';
 
   if (!personalInfo || !income || !deductions) {
     return (
@@ -180,7 +189,7 @@ Generated on: ${new Date().toLocaleDateString()}
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <span className="text-sm">Federal Filing Status</span>
-              <span className="font-medium">{personalInfo.filingStatus.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())}</span>
+              <span className="font-medium">{personalInfo.filingStatus.replace('-', ' ').replace(/\b\w/g, (l) => l.toUpperCase())}</span>
             </div>
             <Separator />
             <div className="flex items-center justify-between">
@@ -288,15 +297,16 @@ Generated on: ${new Date().toLocaleDateString()}
         </CardContent>
       </Card>
 
-      <div className="rounded-md bg-amber-50 dark:bg-amber-900/20 p-4">
-        <h3 className="text-base font-medium text-amber-800 dark:text-amber-300 mb-2">Next Steps</h3>
-        <ul className="list-disc list-inside space-y-1 text-sm text-amber-700 dark:text-amber-300">
-          <li>Submit your return electronically</li>
-          <li>Set up direct deposit for faster refund</li>
-          <li>Save a copy of your return for your records</li>
-          <li>Track your refund status after submission</li>
-        </ul>
-      </div>
+      {requestedDocuments.length > 0 && (
+        <div className="rounded-md bg-amber-50 dark:bg-amber-900/20 p-4">
+          <h3 className="text-base font-medium text-amber-800 dark:text-amber-300 mb-2">Information Requested</h3>
+          <ul className="list-disc list-inside space-y-1 text-sm text-amber-700 dark:text-amber-300">
+            {requestedDocuments.map((req, idx) => (
+              <li key={idx}>{req}</li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       <div className="flex flex-wrap gap-3 justify-center pt-2">
         <Button variant="outline" size="sm" onClick={handlePrintPreview}>
@@ -314,13 +324,15 @@ Generated on: ${new Date().toLocaleDateString()}
         <Button variant="outline" onClick={onPrevious} disabled={isSubmitting}>
           Back to Deductions
         </Button>
-        <Button 
-          className="bg-green-600 hover:bg-green-700" 
-          onClick={onSubmit}
-          disabled={isSubmitting}
-        >
-          {isSubmitting ? "Submitting..." : "Submit Tax Return"}
-        </Button>
+        {showSubmit && (
+          <Button 
+            className="bg-green-600 hover:bg-green-700" 
+            onClick={onSubmit}
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? "Submitting..." : submitLabel}
+          </Button>
+        )}
       </div>
     </div>
   );

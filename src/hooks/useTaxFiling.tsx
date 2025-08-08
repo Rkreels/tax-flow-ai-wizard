@@ -6,13 +6,36 @@ import { PersonalInfoForm, IncomeForm, DeductionsForm } from '@/utils/formValida
 
 interface TaxReturn {
   id: string;
+  name: string;
   personalInfo: PersonalInfoForm | null;
   income: IncomeForm | null;
   deductions: DeductionsForm | null;
-  status: 'draft' | 'in_progress' | 'submitted' | 'approved';
+  status: 'draft' | 'in_progress' | 'submitted' | 'approved' | 'needs_info' | 'resubmitted';
   year: string;
+  type: string;
   lastUpdated: string;
+  ownerUserId: string;
+  ownerName?: string;
+  assignedProId?: string;
+  comments?: Array<{
+    id: string;
+    authorId: string;
+    authorRole: string;
+    message: string;
+    createdAt: string;
+    requestAdditionalInfo?: boolean;
+  }>;
+  requestedDocuments?: string[];
+  attachments?: Array<{
+    id: string;
+    name: string;
+    type: string;
+    size?: string;
+    uploadedAt: string;
+    uploadedBy: string;
+  }>;
 }
+
 
 export const useTaxFiling = (returnId?: string) => {
   const { user } = useAuth();
@@ -49,23 +72,33 @@ export const useTaxFiling = (returnId?: string) => {
   const createNewTaxReturn = (id?: string) => {
     const newReturn: TaxReturn = {
       id: id || `return_${Date.now()}`,
+      name: `New Tax Return ${new Date().getFullYear()}`,
       personalInfo: null,
       income: null,
       deductions: null,
       status: 'draft',
       year: new Date().getFullYear().toString(),
-      lastUpdated: new Date().toISOString()
-    };
+      lastUpdated: new Date().toISOString(),
+      ownerUserId: user?.id || 'anonymous',
+      ownerName: user?.name,
+      assignedProId: undefined,
+      comments: [],
+      requestedDocuments: [],
+      attachments: [],
+      type: 'Individual'
+    } as any;
     setTaxReturn(newReturn);
+    localStorage.setItem(`taxReturn_${newReturn.id}`, JSON.stringify(newReturn));
   };
 
   const savePersonalInfo = async (data: PersonalInfoForm) => {
     if (!taxReturn) return;
     
+    const newStatus: TaxReturn['status'] = taxReturn.status === 'draft' ? 'in_progress' : taxReturn.status;
     const updated = {
       ...taxReturn,
       personalInfo: data,
-      status: 'in_progress' as const,
+      status: newStatus,
       lastUpdated: new Date().toISOString()
     };
     
@@ -74,6 +107,12 @@ export const useTaxFiling = (returnId?: string) => {
     toast.success('Personal information saved');
   };
 
+  const updateReturnName = (name: string) => {
+    if (!taxReturn) return;
+    const updated = { ...taxReturn, name, lastUpdated: new Date().toISOString() };
+    setTaxReturn(updated);
+    localStorage.setItem(`taxReturn_${updated.id}`, JSON.stringify(updated));
+  };
   const saveIncome = async (data: IncomeForm) => {
     if (!taxReturn) return;
     
@@ -113,9 +152,10 @@ export const useTaxFiling = (returnId?: string) => {
       // Simulate API submission
       await new Promise(resolve => setTimeout(resolve, 2000));
       
+      const newStatus: TaxReturn['status'] = taxReturn.status === 'needs_info' ? 'resubmitted' : 'submitted';
       const updated = {
         ...taxReturn,
-        status: 'submitted' as const,
+        status: newStatus,
         lastUpdated: new Date().toISOString()
       };
       
@@ -154,6 +194,7 @@ export const useTaxFiling = (returnId?: string) => {
     saveDeductions,
     submitTaxReturn,
     calculateRefund,
+    updateReturnName,
     isComplete: !!(taxReturn?.personalInfo && taxReturn?.income && taxReturn?.deductions)
   };
 };

@@ -3,24 +3,16 @@ import React, { useState } from "react";
 import MainLayout from "@/components/layout/MainLayout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Eye, FileText, PenLine, Plus, Trash2 } from "lucide-react";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Eye, FileText, PenLine, Plus, Trash2, MessageSquare } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { useVoiceAssistant } from "@/contexts/VoiceAssistantContext";
 import { useLocation } from "react-router-dom";
 import TaxReturnActions from "@/components/tax-return/TaxReturnActions";
+import { returnsStore, StoredTaxReturn } from "@/utils/returnsStore";
 
-interface TaxReturn {
-  id: string;
-  name: string;
-  year: string;
-  status: "draft" | "in_progress" | "submitted" | "approved";
-  type: string;
-  lastUpdated: string;
-  clientId?: string;
-  clientName?: string;
-}
+type TaxReturn = StoredTaxReturn;
 
 const ReturnsPage: React.FC = () => {
   const { user } = useAuth();
@@ -31,57 +23,18 @@ const ReturnsPage: React.FC = () => {
   const isAccountant = user?.role === "accountant";
   const isSupport = user?.role === "support";
   
-  // Sample data - in a real app, this would come from an API
-  const [returns, setReturns] = useState<TaxReturn[]>([
-    {
-      id: "1",
-      name: "2023 Personal Tax Return",
-      year: "2023",
-      status: "in_progress" as const,
-      type: "Individual",
-      lastUpdated: "2025-04-10"
-    },
-    {
-      id: "2",
-      name: "2022 Personal Tax Return",
-      year: "2022",
-      status: "submitted" as const,
-      type: "Individual",
-      lastUpdated: "2024-03-15"
-    },
-    ...(isAccountant ? [
-      {
-        id: "client-ml",
-        name: "2023 Individual Return",
-        year: "2023",
-        status: "in_progress" as const,
-        type: "Individual",
-        lastUpdated: "2025-04-08",
-        clientId: "client-ml",
-        clientName: "Mary Lee"
-      },
-      {
-        id: "client-rg",
-        name: "2023 Schedule C Business",
-        year: "2023",
-        status: "submitted" as const,
-        type: "Business",
-        lastUpdated: "2025-04-05",
-        clientId: "client-rg",
-        clientName: "Robert Garcia"
-      },
-      {
-        id: "client-tw",
-        name: "2023 Rental Income",
-        year: "2023",
-        status: "draft" as const,
-        type: "Schedule E",
-        lastUpdated: "2025-04-02",
-        clientId: "client-tw",
-        clientName: "Tina Williams"
-      }
-    ] : [])
-  ]);
+  const [returns, setReturns] = useState<TaxReturn[]>([]);
+
+  const loadReturns = () => {
+    const all = returnsStore.getAll();
+    const filtered = isAccountant || isAdmin ? all : all.filter(r => r.ownerUserId === user?.id);
+    setReturns(filtered);
+  };
+
+  React.useEffect(() => {
+    loadReturns();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAccountant, isAdmin, user?.id]);
 
   const [selectedReturn, setSelectedReturn] = useState<TaxReturn | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -99,31 +52,29 @@ const ReturnsPage: React.FC = () => {
   }, [speak, isAdmin, isAccountant]);
 
   const handleDelete = (id: string) => {
-    setReturns(returns.filter(r => r.id !== id));
+    returnsStore.delete(id);
+    loadReturns();
     setIsDeleteDialogOpen(false);
     toast.success("Tax return deleted successfully");
     speak("Tax return deleted successfully.");
   };
 
   const handleSave = (id: string) => {
-    setReturns(returns.map(r => 
-      r.id === id 
-        ? { ...r, lastUpdated: new Date().toISOString().split('T')[0] }
-        : r
-    ));
+    const existing = returnsStore.getById(id);
+    if (existing) {
+      returnsStore.save({ ...existing, lastUpdated: new Date().toISOString() });
+      loadReturns();
+    }
   };
 
   const handleSubmit = (id: string) => {
-    setReturns(returns.map(r => 
-      r.id === id 
-        ? { ...r, status: "submitted" as const, lastUpdated: new Date().toISOString().split('T')[0] }
-        : r
-    ));
+    returnsStore.updateStatus(id, "submitted");
+    loadReturns();
   };
 
   const handleReview = (taxReturn: TaxReturn) => {
-    speak(`Opening ${taxReturn.clientName ? taxReturn.clientName + "'s" : "your"} ${taxReturn.year} ${taxReturn.type} return for ${isAccountant ? "review" : "filing"}.`);
-    window.location.href = `/filing?id=${taxReturn.id}${taxReturn.clientId ? `&clientId=${taxReturn.clientId}` : ''}`;
+    speak(`Opening ${taxReturn.ownerName ? taxReturn.ownerName + "'s" : "your"} ${taxReturn.year} ${taxReturn.type} return for ${isAccountant ? "review" : "filing"}.`);
+    window.location.href = `/filing?id=${taxReturn.id}`;
   };
 
   const canEdit = (status: string) => {
@@ -185,6 +136,9 @@ const ReturnsPage: React.FC = () => {
                   <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${getStatusBadgeClass(taxReturn.status)}`}>
                     {taxReturn.status.replace("_", " ").toUpperCase()}
                   </span>
+                  {taxReturn.requestedDocuments && taxReturn.requestedDocuments.length > 0 && (
+                    <span className="ml-2 text-xs text-amber-600">• Info requested</span>
+                  )}
                 </CardDescription>
               </CardHeader>
               <CardContent className="text-sm">
@@ -219,6 +173,36 @@ const ReturnsPage: React.FC = () => {
                     </Button>
                   )}
                   
+                  {isAccountant && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => {
+                        const message = window.prompt("Enter your comment/request for this return:") || "";
+                        const docs = window.prompt("List any documents needed (comma separated):") || "";
+                        if (!message && !docs) return;
+                        const docList = docs
+                          .split(",")
+                          .map((d) => d.trim())
+                          .filter(Boolean);
+                        returnsStore.addComment(taxReturn.id, {
+                          authorId: user!.id,
+                          authorRole: "accountant",
+                          message,
+                          requestAdditionalInfo: docList.length > 0,
+                        });
+                        if (docList.length > 0) {
+                          returnsStore.addRequestedDocuments(taxReturn.id, docList);
+                        }
+                        returnsStore.updateStatus(taxReturn.id, docList.length > 0 ? "needs_info" : taxReturn.status);
+                        loadReturns();
+                        toast.success("Feedback sent to taxpayer");
+                        speak("Your request for additional information has been sent.");
+                      }}
+                    >
+                      <MessageSquare className="h-4 w-4" />
+                    </Button>
+                  )}
                   {canDelete() && (
                     <Button
                       size="sm"
@@ -266,8 +250,18 @@ const ReturnsPage: React.FC = () => {
                 <div className="font-medium">Type:</div>
                 <div>{selectedReturn?.type}</div>
                 <div className="font-medium">Last Updated:</div>
-                <div>{selectedReturn?.lastUpdated}</div>
+                <div>{new Date(selectedReturn?.lastUpdated || '').toLocaleString()}</div>
               </div>
+              {selectedReturn?.requestedDocuments && selectedReturn.requestedDocuments.length > 0 && (
+                <div className="pt-2">
+                  <div className="font-medium text-sm mb-1">Requested Documents</div>
+                  <ul className="list-disc list-inside text-sm">
+                    {selectedReturn.requestedDocuments.map((d, i) => (
+                      <li key={i}>{d}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
             </div>
             <DialogFooter>
               <Button onClick={() => {
