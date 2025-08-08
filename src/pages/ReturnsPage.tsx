@@ -127,9 +127,9 @@ const ReturnsPage: React.FC = () => {
                   <FileText className="mr-2 h-5 w-5 text-muted-foreground" />
                   {taxReturn.name}
                 </CardTitle>
-                {taxReturn.clientName && (
+                {isAccountant && taxReturn.ownerName && (
                   <CardDescription>
-                    Client: {taxReturn.clientName}
+                    Client: {taxReturn.ownerName}
                   </CardDescription>
                 )}
                 <CardDescription>
@@ -153,7 +153,7 @@ const ReturnsPage: React.FC = () => {
                     size="sm"
                     variant="outline"
                     onClick={() => {
-                      speak(`Viewing details for ${taxReturn.clientName ? taxReturn.clientName + "'s" : ""} ${taxReturn.year} ${taxReturn.type} return.`);
+                      speak(`Viewing details for ${isAccountant && taxReturn.ownerName ? taxReturn.ownerName + "'s " : ""}${taxReturn.year} ${taxReturn.type} return.`);
                       setSelectedReturn(taxReturn);
                       setIsViewDialogOpen(true);
                     }}
@@ -237,7 +237,7 @@ const ReturnsPage: React.FC = () => {
             <DialogHeader>
               <DialogTitle>{selectedReturn?.name}</DialogTitle>
               <DialogDescription>
-                {selectedReturn?.clientName ? `Client: ${selectedReturn.clientName} - ` : ''}
+                {isAccountant && selectedReturn?.ownerName ? `Client: ${selectedReturn.ownerName} - ` : ''}
                 Return details for {selectedReturn?.year}
               </DialogDescription>
             </DialogHeader>

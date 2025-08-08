@@ -11,12 +11,12 @@ interface TaxReturn {
   id: string;
   name: string;
   year: string;
-  status: "draft" | "in_progress" | "submitted" | "approved";
+  status: "draft" | "in_progress" | "submitted" | "approved" | "needs_info" | "resubmitted";
   type: string;
   lastUpdated: string;
-  clientId?: string;
-  clientName?: string;
+  ownerName?: string;
 }
+
 
 interface TaxReturnActionsProps {
   taxReturn: TaxReturn;
@@ -33,7 +33,7 @@ const TaxReturnActions: React.FC<TaxReturnActionsProps> = ({ taxReturn, onSave, 
 
   const handleSave = async () => {
     setIsSaving(true);
-    speak(`Saving ${taxReturn.clientName ? taxReturn.clientName + "'s" : "your"} ${taxReturn.year} tax return.`);
+    speak(`Saving ${taxReturn.ownerName ? taxReturn.ownerName + "'s" : "your"} ${taxReturn.year} tax return.`);
     
     // Simulate save operation
     await new Promise(resolve => setTimeout(resolve, 1000));
@@ -45,7 +45,7 @@ const TaxReturnActions: React.FC<TaxReturnActionsProps> = ({ taxReturn, onSave, 
   };
 
   const handlePrint = () => {
-    speak(`Preparing to print ${taxReturn.clientName ? taxReturn.clientName + "'s" : "your"} ${taxReturn.year} tax return.`);
+    speak(`Preparing to print ${taxReturn.ownerName ? taxReturn.ownerName + "'s" : "your"} ${taxReturn.year} tax return.`);
     
     // Create a print-friendly version
     const printWindow = window.open('', '_blank');
@@ -72,7 +72,7 @@ const TaxReturnActions: React.FC<TaxReturnActionsProps> = ({ taxReturn, onSave, 
               <p><span class="label">Return Type:</span> ${taxReturn.type}</p>
               <p><span class="label">Status:</span> ${taxReturn.status.replace("_", " ").toUpperCase()}</p>
               <p><span class="label">Last Updated:</span> ${taxReturn.lastUpdated}</p>
-              ${taxReturn.clientName ? `<p><span class="label">Client:</span> ${taxReturn.clientName}</p>` : ''}
+              ${taxReturn.ownerName ? `<p><span class="label">Client:</span> ${taxReturn.ownerName}</p>` : ''}
             </div>
             <div class="section">
               <h3>Return Details</h3>
@@ -90,7 +90,7 @@ const TaxReturnActions: React.FC<TaxReturnActionsProps> = ({ taxReturn, onSave, 
   };
 
   const handleDownload = () => {
-    speak(`Downloading ${taxReturn.clientName ? taxReturn.clientName + "'s" : "your"} ${taxReturn.year} tax return as PDF.`);
+    speak(`Downloading ${taxReturn.ownerName ? taxReturn.ownerName + "'s" : "your"} ${taxReturn.year} tax return as PDF.`);
     
     // Simulate download
     const element = document.createElement('a');
@@ -108,7 +108,7 @@ const TaxReturnActions: React.FC<TaxReturnActionsProps> = ({ taxReturn, onSave, 
 
   const handleSubmit = async () => {
     setIsSubmitting(true);
-    speak(`Submitting ${taxReturn.clientName ? taxReturn.clientName + "'s" : "your"} ${taxReturn.year} tax return to the IRS.`);
+    speak(`Submitting ${taxReturn.ownerName ? taxReturn.ownerName + "'s" : "your"} ${taxReturn.year} tax return to the IRS.`);
     
     // Simulate submit operation
     await new Promise(resolve => setTimeout(resolve, 2000));
@@ -120,7 +120,7 @@ const TaxReturnActions: React.FC<TaxReturnActionsProps> = ({ taxReturn, onSave, 
     setIsSubmitDialogOpen(false);
   };
 
-  const canSubmit = taxReturn.status === "in_progress" && (user?.role === "user" || user?.role === "admin" || user?.role === "accountant");
+  const canSubmit = (taxReturn.status === "in_progress" || taxReturn.status === "needs_info") && (user?.role === "user" || user?.role === "admin" || user?.role === "accountant");
 
   return (
     <div className="flex space-x-2">
